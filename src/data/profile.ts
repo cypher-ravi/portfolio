@@ -1,34 +1,66 @@
 // Everything the page says about Ravi lives here, so content edits never touch layout.
-// Values in [brackets] are placeholders waiting for real details.
+// Source: Ravi's resume (September 2026).
 
 export const profile = {
   name: 'Ravi',
-  role: 'Senior Software Engineer',
-  headline: 'I build software that explains itself.',
-  intro: 'Senior engineer. Product systems, practical AI.',
-  location: '[City], India',
+  role: 'Software Engineer',
+  headline: ['I build software that', 'explains itself.'],
+  intro: 'Software engineer. Hiring platforms, search, practical AI.',
   availability: 'Open to senior roles',
-  email: '[you@yourdomain]',
+  email: 'ravikdev1999@gmail.com',
   links: {
     github: 'https://github.com/cypher-ravi',
-    linkedin: '[https://linkedin.com/in/...]',
+    linkedin: 'https://www.linkedin.com/in/ravi-kumar-219bb11b2/',
+    leetcode: 'https://leetcode.com/cypher-ravi/',
     resume: '/resume.pdf',
   },
 };
 
 export const glance = [
-  { label: 'Experience', value: '[N] years' },
-  { label: 'Backend', value: 'Python, Django, MySQL' },
-  { label: 'Frontend', value: 'TypeScript, React, Next.js' },
+  { label: 'Now', value: 'Software Engineer, Instahyre' },
+  { label: 'Backend', value: 'Python, Django, Elasticsearch, Redis' },
+  { label: 'Frontend', value: 'Angular, React, JavaScript' },
+  { label: 'AI', value: 'OpenAI APIs, RAG, Weaviate' },
 ];
 
-export type Work = {
-  name: string;
-  tldr: string;
-  stack: string[];
-  points: string[];
-  href?: string;
-};
+export type Role = { company: string; title: string; period: string; points: string[] };
+
+export const experience: Role[] = [
+  {
+    company: 'Instahyre',
+    title: 'Software Engineer',
+    period: '2023 – now',
+    points: [
+      'Built around 10 employer-side features on a hiring platform, including custom search modes on Elasticsearch.',
+      'Led an impression-based system that lets employers rank candidate pools by relevance.',
+      'Shipped "Make Job Live" so employers can publish job listings in real time.',
+    ],
+  },
+  {
+    company: 'Maximize AI',
+    title: 'Software Developer Intern',
+    period: '2023',
+    points: [
+      'Built a website chatbot on GPT-4 with Weaviate embeddings and Redis, answering questions from site content.',
+      'Built ThunderClap AI, a Chrome extension that drafts tweets with the OpenAI API.',
+      'Built Whisper Live, real-time translation for Google Meet.',
+    ],
+  },
+  {
+    company: 'Delhi Skill Development Center',
+    title: 'Full-Stack Instructor',
+    period: '2023',
+    points: ['Taught Python, Django and React to 40+ students over six months.'],
+  },
+  {
+    company: 'Freelance and early roles',
+    title: 'Backend Developer',
+    period: '2020 – 2022',
+    points: ['Django backends for a college events app, a phone retailer (client profit up 30%), a vendor app and a matrimonial platform.'],
+  },
+];
+
+export type Work = { name: string; tldr: string; stack: string[]; points: string[]; href?: string };
 
 export const work: Work[] = [
   {
@@ -63,3 +95,5 @@ export const principles = [
   'Evals before prompts.',
   'Budgets are a feature.',
 ];
+
+export const education = 'B.Tech, Computer Science · DCRUST Murthal · 2023';
