@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import Story from '../components/Story.astro';
+import PageTree from '../components/PageTree.astro';
 import { profile, glance, experience, education, projects, principles } from '../data/profile';
 
 // 1420.405 MHz is the hydrogen line, the frequency radio astronomers (and Contact's Ellie Arroway) listen on.
@@ -11,6 +12,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
   title={`${profile.name} · ${profile.role}`}
   description={`${profile.name}, ${profile.role}. ${profile.headline.join(' ')}`}
 >
+  <PageTree />
   <a class="skip" href="#main">Skip to content</a>
 
   <header class="bar">
@@ -381,7 +383,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
     position: relative; margin: 140px -20px 0; padding-block: 90px;
     background:
       radial-gradient(60% 80% at 80% 30%, color-mix(in srgb, var(--mind) 10%, transparent), transparent 70%),
-      linear-gradient(var(--void), #070b10 20%, #070b10 80%, var(--void));
+      linear-gradient(transparent, rgba(7, 11, 16, 0.72) 20%, rgba(7, 11, 16, 0.72) 80%, transparent);
     border-block: 1px solid var(--line);
   }
   .works-head { width: 100%; max-width: 1080px; display: flex; justify-content: space-between; align-items: end; gap: 20px; padding-inline: 20px; margin-bottom: 36px; }
@@ -460,7 +462,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
   }
   .copy:hover { border-color: var(--signal); }
 
-  .foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; padding-block: 36px 48px; border-top: 1px solid var(--line); margin-top: 96px; font-size: 0.9rem; }
+  .foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; padding-block: 36px 190px; border-top: 1px solid var(--line); margin-top: 96px; font-size: 0.9rem; }
   .foot a { color: var(--muted); text-decoration: none; }
   .foot a:hover { color: var(--text); }
 
