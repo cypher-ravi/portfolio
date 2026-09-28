@@ -107,13 +107,6 @@ export const projects: Project[] = [
   { name: 'Ask Ravi', kind: 'Lab', theme: 'AI', year: 'Next', tldr: 'Ask about my work, get sourced answers.', stack: [], points: [], status: 'Coming soon' },
 ];
 
-// Acts 2-4 of the opening story. Act 1 is the hero. Each act links to a section below.
-export const story = [
-  { act: 'Mind', title: 'Calm systems people can trust', body: 'Software should lower the stress of the people using it. Tap the mind to start a thought.', href: '#ai', link: 'How I use AI' },
-  { act: 'Growth', title: 'Growing since 2020', body: 'Freelance, then Maximize AI, then Instahyre. Keep scrolling to watch it grow.', href: '#projects', link: 'Projects' },
-  { act: 'Connect', title: "Let's grow something together", body: 'Hiring for a senior engineer who knows AI? I reply within a day.', href: '#contact', link: 'Contact' },
-];
-
 export const principles = [
   { title: 'Rules first, models where rules run out.', body: 'If a rule can do it, it is cheaper, faster and testable.' },
   { title: 'Evals before prompts.', body: 'Every AI feature ships with a test set that says when it gets worse.' },
