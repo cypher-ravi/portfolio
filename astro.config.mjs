@@ -1,7 +1,9 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 
-// Replace with the real domain once it is connected.
+// GitHub Pages serves the site from /portfolio/, so its workflow sets BASE_PATH.
+// Anywhere else (local dev, a custom domain) it lives at the root.
 export default defineConfig({
-  site: 'https://example.pages.dev',
+  site: process.env.SITE_URL ?? 'https://cypher-ravi.github.io',
+  base: process.env.BASE_PATH ?? '/',
 });
