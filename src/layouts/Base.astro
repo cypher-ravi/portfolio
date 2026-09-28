@@ -4,7 +4,6 @@ import '@fontsource-variable/orbitron/wght.css';
 import '@fontsource-variable/space-grotesk/wght.css';
 import '@fontsource/space-mono/latin-400.css';
 import '../styles/global.css';
-import SignalField from '../components/SignalField.astro';
 
 interface Props {
   title: string;
@@ -28,7 +27,6 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta name="theme-color" content="#05070a" />
   </head>
   <body>
-    <SignalField />
     <div class="grain" aria-hidden="true"></div>
     <slot />
     <script>

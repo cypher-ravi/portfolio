@@ -102,7 +102,6 @@ export const projects: Project[] = [
     stack: ['Real-time', 'Google Meet'],
     points: ['Built at Maximize AI.', 'Translates a Google Meet call as it happens.'],
   },
-  { name: 'Overhead', kind: 'Lab', theme: 'Space', year: 'Next', tldr: 'Satellites above you, right now.', stack: [], points: [], status: 'Coming soon' },
   { name: 'Vitals Brief', kind: 'Lab', theme: 'Health', year: 'Next', tldr: 'Your wearable data in plain words.', stack: [], points: [], status: 'Coming soon' },
   { name: 'Breathing Room', kind: 'Lab', theme: 'Mind', year: 'Next', tldr: 'A calm daily check-in.', stack: [], points: [], status: 'Coming soon' },
   { name: 'Ask Ravi', kind: 'Lab', theme: 'AI', year: 'Next', tldr: 'Ask about my work, get sourced answers.', stack: [], points: [], status: 'Coming soon' },
@@ -112,7 +111,7 @@ export const projects: Project[] = [
 export const story = [
   { act: 'Mind', title: 'Calm systems people can trust', body: 'Software should lower the stress of the people using it. Tap the mind to start a thought.', href: '#ai', link: 'How I use AI' },
   { act: 'Growth', title: 'Growing since 2020', body: 'Freelance, then Maximize AI, then Instahyre. Keep scrolling to watch it grow.', href: '#projects', link: 'Projects' },
-  { act: 'Reply', title: 'Send a signal back', body: 'Hiring for a senior engineer who knows AI? I reply within a day.', href: '#contact', link: 'Contact' },
+  { act: 'Connect', title: "Let's grow something together", body: 'Hiring for a senior engineer who knows AI? I reply within a day.', href: '#contact', link: 'Contact' },
 ];
 
 export const principles = [

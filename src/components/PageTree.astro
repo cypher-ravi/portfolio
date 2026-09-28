@@ -1,7 +1,8 @@
 ---
-// The page tree: one tree that runs the whole page. Its crown grows out of the
-// opening story, the trunk runs down the left gutter with a branch into each
-// section, and the roots spread under the contact section. It grows as you scroll.
+// The page tree: one tree that runs the whole page, half living thing, half circuit.
+// Its crown grows out of the opening story, the trunk runs down the left gutter with a branch into each
+// section, and the roots spread under the contact section. It grows as you scroll,
+// branches join the trunk at circuit pads, and pulses of data rise through it like sap.
 // Pure SVG, laid out from the real section positions; decoration only.
 ---
 <svg id="page-tree" aria-hidden="true" focusable="false">
@@ -21,6 +22,7 @@
   <path id="pt-trunk-glow" />
   <path id="pt-trunk" />
   <g id="pt-branches"></g>
+  <g id="pt-sap"><circle r="2.2" /><circle r="2.2" /><circle r="2.2" /><circle r="2.2" /></g>
   <circle id="pt-tip" r="3.5" />
 </svg>
 
@@ -38,6 +40,9 @@
   :global(#page-tree .branch) { stroke-width: 1.5; }
   :global(#page-tree .twig) { stroke-width: 1; }
   :global(#page-tree .root) { stroke: #3b4f6e; stroke-width: 1.3; }
+  :global(#page-tree .pad) { fill: var(--void); stroke: var(--signal); stroke-width: 1.2; opacity: 0; transition: opacity 0.5s; }
+  :global(#page-tree .on .pad) { opacity: 1; }
+  #pt-sap circle { fill: var(--signal); filter: drop-shadow(0 0 4px var(--signal)); }
   :global(#page-tree .root.fine) { stroke-width: 0.8; stroke-opacity: 0.7; }
 
   /* Leaves open with a flash, then keep breathing a soft glow. */
@@ -67,6 +72,7 @@
   const branchesG = document.getElementById('pt-branches')!;
   const rootsG = document.getElementById('pt-roots')!;
   const tip = document.getElementById('pt-tip') as unknown as SVGCircleElement;
+  const sap = [...document.querySelectorAll<SVGCircleElement>('#pt-sap circle')];
   const bark = svg.querySelector('#pt-bark') as SVGLinearGradientElement;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -144,6 +150,7 @@
       const tx = docX(t) - 16;
       const g = el('g', {}, branchesG);
       const from = ty + 70;
+      el('rect', { class: 'pad', x: x0 - 3.5, y: from - 3.5, width: 7, height: 7, transform: `rotate(45 ${x0} ${from})` }, g);
       el('path', { class: 'branch', d: `M${x0} ${from} C${x0 + (tx - x0) * 0.2} ${from - 10} ${x0 + (tx - x0) * 0.55} ${ty + 4} ${tx} ${ty}` }, g);
       cluster(g, tx, ty, narrow ? 2 : 3, -115, narrow ? 0.75 : 1); // leaves point up and back, away from the text
       grown.push({ y: from, node: g });
@@ -186,6 +193,7 @@
   }
 
   // Growth follows the reader: the trunk reaches 70% down the viewport.
+  let grownLen = 0;
   function update() {
     if (!trunkLen) return;
     const atEnd = scrollY + innerHeight >= document.documentElement.scrollHeight - 40;
@@ -196,6 +204,7 @@
     const pt = trunk.getPointAtLength(trunkLen * f);
     tip.setAttribute('cx', String(pt.x)); tip.setAttribute('cy', String(pt.y));
     tip.style.opacity = f > 0 && f < 1 ? '1' : '0';
+    grownLen = trunkLen * f;
     for (const g of grown) {
       const on = reach >= g.y;
       if (on === g.node.classList.contains('on')) continue;
@@ -214,5 +223,19 @@
   document.fonts?.ready.then(relayout);
   new ResizeObserver(relayout).observe(document.body);
   addEventListener('scroll', () => requestAnimationFrame(update), { passive: true });
+
+  // Sap: a few pulses of light rising from the roots up the grown part of the trunk.
+  const flow = (ms: number) => {
+    sap.forEach((c, i) => {
+      if (grownLen < 80) { c.style.opacity = '0'; return; }
+      const d = grownLen - ((ms * 0.12 + i * grownLen / sap.length) % grownLen);
+      const p = trunk.getPointAtLength(d);
+      c.setAttribute('cx', String(p.x)); c.setAttribute('cy', String(p.y));
+      c.style.opacity = String(Math.min(1, (grownLen - d) / 60, d / 60));
+    });
+    requestAnimationFrame(flow);
+  };
+  if (!reduced) requestAnimationFrame(flow);
+  else sap.forEach((c) => (c.style.opacity = '0'));
   relayout();
 </script>
