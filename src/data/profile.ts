@@ -12,7 +12,7 @@ export const profile = {
     github: 'https://github.com/cypher-ravi',
     linkedin: 'https://www.linkedin.com/in/ravi-kumar-219bb11b2/',
     leetcode: 'https://leetcode.com/cypher-ravi/',
-    resume: '/resume.pdf',
+    resume: `${import.meta.env.BASE_URL.replace(/\/$/, '')}/resume.pdf`,
   },
 };
 
