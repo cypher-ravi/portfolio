@@ -1,17 +1,17 @@
 ---
 import Base from '../layouts/Base.astro';
-import Garden from '../components/Garden.astro';
+import Field from '../components/Field.astro';
 import { profile, glance, experience, education, projects, principles } from '../data/profile';
 
 const pad = (n: number) => String(n).padStart(2, '0');
-// Told in the order it grew, oldest first, so the bonsai grows alongside it.
+// Told oldest first, from 2020 to now.
 const roles = [...experience].reverse();
 ---
 <Base
   title={`${profile.name} · ${profile.role}`}
   description={`${profile.name}, ${profile.role}. ${profile.headline.join(' ')}`}
 >
-  <Garden />
+  <Field />
   <a class="skip" href="#main">Skip to content</a>
 
   <header class="bar" id="bar">
@@ -38,7 +38,7 @@ const roles = [...experience].reverse();
           <a class="btn" href={`mailto:${profile.email}`}>Say hello</a>
         </div>
       </div>
-      <p class="hint label" aria-hidden="true">Drag to turn · tap the leaves</p>
+      <p class="hint label" aria-hidden="true">Move to scatter · click to burst</p>
       <a class="scroll label" href="#glance" aria-label="Scroll to content"><i></i>Scroll</a>
     </section>
 
@@ -136,7 +136,7 @@ const roles = [...experience].reverse();
         </header>
         <ol class="principles">
           {principles.map((p, i) => (
-            <li data-stone={i} tabindex="0" data-reveal>
+            <li data-reveal>
               <span class="label">{pad(i + 1)}</span>
               <p class="p-title">{p.title}</p>
               <p class="p-body">{p.body}</p>
@@ -166,7 +166,7 @@ const roles = [...experience].reverse();
   </main>
 
   <footer class="wrap foot">
-    <span class="label">Planted in 2020 · still growing</span>
+    <span class="label">Built by Ravi · 2020 to now</span>
     <a href="#top">Back to top ↑</a>
   </footer>
 </Base>
@@ -175,16 +175,15 @@ const roles = [...experience].reverse();
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const clamp = (v: number) => Math.min(1, Math.max(0, v));
   const pad = (n: number) => String(n).padStart(2, '0');
-  const garden = (name: string, detail?: number) => document.dispatchEvent(new CustomEvent(`garden:${name}`, { detail }));
 
-  // Copy email: a short confirmation (and a few falling leaves), or select the text as a fallback.
+  // Copy email: a short confirmation (and a small burst of particles), or select the text as a fallback.
   const btn = document.getElementById('copy-email') as HTMLButtonElement;
   const email = document.getElementById('email')!;
   btn.addEventListener('click', async () => {
     try {
       await navigator.clipboard.writeText(email.textContent ?? '');
       btn.textContent = 'Copied';
-      garden('burst');
+      document.dispatchEvent(new Event('field:burst'));
     } catch {
       const r = document.createRange();
       r.selectNodeContents(email);
@@ -193,16 +192,6 @@ const roles = [...experience].reverse();
       btn.textContent = 'Selected';
     }
     setTimeout(() => (btn.textContent = 'Copy'), 1800);
-  });
-
-  // Principles: the one in focus lights its stone in the bonsai's pot.
-  document.querySelectorAll<HTMLElement>('[data-stone]').forEach((li) => {
-    const on = () => garden('stone', Number(li.dataset.stone));
-    const off = () => garden('stone', -1);
-    li.addEventListener('pointerenter', on);
-    li.addEventListener('focus', on);
-    li.addEventListener('pointerleave', off);
-    li.addEventListener('blur', off);
   });
 
   // Highlight the nav link for the section in view.
@@ -331,7 +320,7 @@ const roles = [...experience].reverse();
     border-bottom-color: var(--line);
   }
   .bar-inner { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-block: 16px; }
-  .mark { font: 400 1.6rem/1 var(--serif); color: var(--text); text-decoration: none; }
+  .mark { font: 700 1.3rem/1 var(--display); letter-spacing: -0.03em; color: var(--text); text-decoration: none; }
   .mark span { color: var(--accent); }
   nav { display: flex; align-items: center; gap: 26px; font: 450 0.9rem var(--sans); }
   nav a { color: var(--muted); text-decoration: none; transition: color 0.3s var(--ease); position: relative; }
@@ -346,14 +335,14 @@ const roles = [...experience].reverse();
 
   .ctas { display: flex; flex-wrap: wrap; gap: 12px; }
 
-  /* Hero: words on the left, the bonsai (in the garden layer) on the right. */
+  /* Hero: words on the left, the particle field on the right. */
   .hero {
     min-height: calc(100vh - 70px); min-height: calc(100svh - 70px);
     display: flex; flex-direction: column; justify-content: center;
     padding-block: 40px 110px;
   }
   .hero-copy { max-width: 600px; display: grid; gap: 28px; }
-  h1 { font-size: clamp(3.2rem, 7.4vw, 6.4rem); }
+  h1 { font-size: clamp(2.8rem, 6vw, 5.2rem); }
   .lede { font-size: 1.12rem; color: var(--muted); }
   :global(.no-gl) .hint { display: none; }
   .hint { position: absolute; right: 0; bottom: 40px; width: 42%; text-align: center; opacity: 0.8; }
@@ -376,16 +365,16 @@ const roles = [...experience].reverse();
   /* Sections */
   .block { padding-block: 160px 0; display: grid; gap: 48px; scroll-margin-top: 40px; }
   .head { display: grid; gap: 16px; }
-  h2 { font-size: clamp(2.6rem, 5.4vw, 4.4rem); }
+  h2 { font-size: clamp(2.2rem, 4.4vw, 3.6rem); }
   .points { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; color: var(--muted); }
   .points li::marker { color: var(--accent); }
   .tags { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; }
   .tags li { font: 450 0.76rem/1 var(--sans); padding: 7px 11px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); }
 
-  /* Experience: the bonsai grows in the left column; the chapter it's on sits beneath it. */
+  /* Experience: the particles form </> in the left column; the chapter in view sits beneath it. */
   .journey { display: grid; grid-template-columns: 1fr 1.25fr; gap: 56px; align-items: start; }
   .chapter { position: sticky; top: calc(100vh - 190px); top: calc(100svh - 190px); display: grid; gap: 6px; justify-items: center; text-align: center; }
-  .ch-period { font: italic 400 2rem/1 var(--serif); color: var(--accent); }
+  .ch-period { font: 700 1.8rem/1 var(--display); letter-spacing: -0.03em; color: var(--accent); }
   .ch-company { font-size: 0.95rem; color: var(--muted); }
   .timeline { list-style: none; margin: 0; padding: 0 0 0 36px; display: grid; gap: 64px; position: relative; }
   .rail { position: absolute; left: 4px; top: 10px; bottom: 10px; width: 1px; background: var(--line); }
@@ -397,10 +386,10 @@ const roles = [...experience].reverse();
     background: var(--bg); border: 1px solid var(--muted); transition: background 0.5s, border-color 0.5s;
   }
   .timeline > li.on::before { background: var(--accent); border-color: var(--accent); }
-  .timeline h3 { font: 400 clamp(1.6rem, 2.6vw, 2.1rem)/1.1 var(--serif); }
+  .timeline h3 { font: 600 clamp(1.3rem, 2.2vw, 1.65rem)/1.2 var(--display); letter-spacing: -0.02em; }
   .period { font: 500 0.78rem var(--sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-variant-numeric: tabular-nums; }
   .current .period { color: var(--accent); }
-  .at { color: var(--muted); font-style: italic; }
+  .at { color: var(--muted); font-weight: 400; }
   .edu { max-width: none; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; color: var(--muted); padding-top: 26px; border-top: 1px solid var(--line); }
 
   /* Projects: a full-width band; cards slide sideways. */
@@ -424,7 +413,7 @@ const roles = [...experience].reverse();
     transition: border-color 0.5s var(--ease), transform 0.6s var(--ease);
   }
   .card:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
-  .card h3 { font: 400 2rem/1.05 var(--serif); margin-top: auto; }
+  .card h3 { font: 700 1.6rem/1.1 var(--display); letter-spacing: -0.03em; margin-top: auto; }
   .card p { color: var(--muted); font-size: 0.97rem; }
   .kind-lab { background: transparent; border-style: dashed; }
   .card-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
@@ -453,7 +442,7 @@ const roles = [...experience].reverse();
   .detail[open] { animation: pop 0.5s var(--ease); }
   @keyframes pop { from { opacity: 0; transform: translateY(16px) scale(0.98); } }
   .detail-in { display: grid; gap: 18px; padding: 30px; }
-  .detail h3 { font: 400 2.4rem/1.05 var(--serif); }
+  .detail h3 { font: 700 2rem/1.1 var(--display); letter-spacing: -0.03em; }
   .detail .tldr { font-size: 1.08rem; }
   .close {
     width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; line-height: 1;
@@ -461,25 +450,24 @@ const roles = [...experience].reverse();
   }
   .close:hover { color: var(--text); border-color: var(--muted); }
 
-  /* AI: three principles on the left; each lights a stone in the pot on the right. */
+  /* AI: three principles on the left; the particles form a brain on the right. */
   .principles { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; max-width: 560px; }
   .principles li {
     display: grid; grid-template-columns: 44px 1fr; gap: 6px 12px; padding-block: 26px;
-    border-top: 1px solid var(--line); outline: none; cursor: default;
+    border-top: 1px solid var(--line);
   }
   .principles li:last-child { border-bottom: 1px solid var(--line); }
   .principles .label { padding-top: 10px; transition: color 0.4s; }
-  .principles li:hover .label, .principles li:focus-visible .label { color: var(--accent); }
-  .principles li:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
-  .p-title { grid-column: 2; font: 400 clamp(1.6rem, 2.6vw, 2.1rem)/1.15 var(--serif); }
+  .principles li:hover .label { color: var(--accent); }
+  .p-title { grid-column: 2; font: 600 clamp(1.3rem, 2.2vw, 1.6rem)/1.25 var(--display); letter-spacing: -0.02em; }
   .p-body { grid-column: 2; color: var(--muted); }
 
   /* Contact */
   .contact { gap: 30px; }
-  .contact h2 { font-size: clamp(3.4rem, 8vw, 6.6rem); }
+  .contact h2 { font-size: clamp(3rem, 7vw, 5.6rem); }
   .contact .lede { max-width: 44ch; }
   .email-row { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
-  .addr { font: italic 400 clamp(1.5rem, 3.4vw, 2.3rem) var(--serif); color: var(--text); user-select: all; overflow-wrap: anywhere; }
+  .addr { font: 500 clamp(1.3rem, 3vw, 2rem) var(--display); letter-spacing: -0.02em; color: var(--text); user-select: all; overflow-wrap: anywhere; }
   .copy {
     font: 500 0.8rem var(--sans); padding: 7px 14px; border-radius: 999px; cursor: pointer;
     border: 1px solid var(--line); background: none; color: var(--accent); transition: border-color 0.3s;
@@ -498,7 +486,7 @@ const roles = [...experience].reverse();
     .hint { display: none; }
   }
   @media (max-width: 760px) {
-    /* On phones the bonsai sits above the headline. */
+    /* On phones the particles sit above the headline. */
     .hero { justify-content: flex-end; padding-top: 44vh; padding-top: 44svh; min-height: 100vh; min-height: 100svh; margin-top: -70px; }
     .hero-copy { gap: 22px; }
     .scroll { display: none; }
