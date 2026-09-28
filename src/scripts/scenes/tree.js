@@ -15,7 +15,24 @@ export const CHAPTERS = [
   { at: 0.95, label: 'Now · still growing' },
 ];
 
-export function createTree(THREE, glow, { depth = 8, leavesPerTip = 2 } = {}) {
+function leafTexture(THREE, angle) {
+  const S = 64, cv = document.createElement('canvas');
+  cv.width = cv.height = S;
+  const g = cv.getContext('2d');
+  const halo = g.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+  halo.addColorStop(0, 'rgba(255,255,255,.35)'); halo.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = halo; g.fillRect(0, 0, S, S);
+  g.translate(S / 2, S / 2); g.rotate(angle);
+  g.beginPath(); // almond blade, tip up
+  g.moveTo(0, -24); g.quadraticCurveTo(15, -4, 0, 22); g.quadraticCurveTo(-15, -4, 0, -24);
+  g.fillStyle = 'rgba(255,255,255,.95)'; g.fill();
+  g.globalCompositeOperation = 'destination-out'; // midrib as a thin dark line
+  g.strokeStyle = 'rgba(0,0,0,.55)'; g.lineWidth = 1.6;
+  g.beginPath(); g.moveTo(0, -18); g.lineTo(0, 18); g.stroke();
+  return new THREE.CanvasTexture(cv);
+}
+
+export function createTree(THREE, { depth = 8, leavesPerTip = 2 } = {}) {
   const R = rng(42);
   const segs = [];
 
@@ -64,8 +81,8 @@ export function createTree(THREE, glow, { depth = 8, leavesPerTip = 2 } = {}) {
   lines.frustumCulled = false;
   group.add(lines);
 
-  // Leaves: a few glowing points around each tip (and some on the last forks).
-  const holders = segs.filter((s) => s.d >= depth - 1);
+  // Leaves: one at each branch tip.
+  const holders = segs.filter((s) => s.d === depth);
   const leaves = [];
   for (const s of holders) {
     const n = s.d === depth ? leavesPerTip : 1;
@@ -79,16 +96,23 @@ export function createTree(THREE, glow, { depth = 8, leavesPerTip = 2 } = {}) {
       });
     }
   }
-  const L = leaves.length;
-  const leafPos = new Float32Array(L * 3), leafCol = new Float32Array(L * 3);
-  leaves.forEach((l, i) => leafPos.set(l.p, i * 3));
-  const leafGeo = new THREE.BufferGeometry();
-  leafGeo.setAttribute('position', new THREE.BufferAttribute(leafPos, 3));
-  leafGeo.setAttribute('color', new THREE.BufferAttribute(leafCol, 3));
-  const leafMat = new THREE.PointsMaterial({ size: 1.5, map: glow, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
-  const leafPts = new THREE.Points(leafGeo, leafMat);
-  leafPts.frustumCulled = false;
-  group.add(leafPts);
+  // Leaves are drawn as leaf-shaped sprites (a soft halo around an almond blade
+  // with a midrib). Points always face the camera, so three batches at different
+  // angles keep the canopy from looking stamped.
+  const ANGLES = [-0.7, 0.15, 0.95];
+  const batches = ANGLES.map((angle, b) => {
+    const mine = leaves.filter((_, i) => i % ANGLES.length === b);
+    const pos = new Float32Array(mine.length * 3), col = new Float32Array(mine.length * 3);
+    mine.forEach((l, i) => pos.set(l.p, i * 3));
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    const mat = new THREE.PointsMaterial({ size: 2.2, map: leafTexture(THREE, angle), vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
+    const pts = new THREE.Points(geo, mat);
+    pts.frustumCulled = false; // positions are fixed but the group scale/rotation moves them a lot
+    group.add(pts);
+    return { mine, geo, col, mat };
+  });
 
   const green = new THREE.Color(0x9fe3a8), gold = new THREE.Color(0xffd27a), flash = new THREE.Color(0xffffff);
 
@@ -104,16 +128,18 @@ export function createTree(THREE, glow, { depth = 8, leavesPerTip = 2 } = {}) {
       });
       lg.attributes.position.needsUpdate = true;
 
-      leaves.forEach((l, i) => {
-        const k = Math.min(1, Math.max(0, (g - l.t) / 0.06)); // 0 → hidden, 1 → open
-        const pop = k > 0 && k < 1 ? Math.sin(k * Math.PI) * 0.8 : 0; // a bright flash as it opens
-        const glowPulse = 0.32 + 0.14 * Math.sin(time * 1.4 + l.phase); // slow breathing glow
-        c.copy(green).lerp(gold, l.hue * 0.6).multiplyScalar(k * glowPulse).lerp(flash, pop * 0.5);
-        leafCol.set([c.r, c.g, c.b], i * 3);
-      });
-      leafGeo.attributes.color.needsUpdate = true;
-
-      lineMat.opacity = 0.9 * weight; leafMat.opacity = weight;
+      for (const bt of batches) {
+        bt.mine.forEach((l, i) => {
+          const k = Math.min(1, Math.max(0, (g - l.t) / 0.06)); // 0 → hidden, 1 → open
+          const pop = k > 0 && k < 1 ? Math.sin(k * Math.PI) : 0; // a bright flash as it opens
+          const glowPulse = 0.4 + 0.15 * Math.sin(time * 1.4 + l.phase); // slow breathing glow
+          c.copy(green).lerp(gold, l.hue * 0.6).multiplyScalar(k * glowPulse).lerp(flash, pop * 0.35);
+          bt.col.set([c.r, c.g, c.b], i * 3);
+        });
+        bt.geo.attributes.color.needsUpdate = true;
+        bt.mat.opacity = weight;
+      }
+      lineMat.opacity = 0.9 * weight;
       group.visible = weight > 0.01;
     },
   };
