@@ -1,68 +1,66 @@
-/* Life × Tech: living things drawn in light and code. Single dark world by design. */
+/* Quiet Bonsai: a warm dark room, one living thing, one accent. */
 :root {
   color-scheme: dark;
-  --void: #05070a;
-  --panel: #0b1117;
-  --line: #16242e;
-  --text: #e8f6ff;
-  --muted: #8aa4b3;
-  --signal: #8fd3ff;
-  --signal-dim: #2b4a5e;
-  --flare: #ffc46b;
-  --mind: #b7a8ff;
-  --growth: #9fe3a8;
+  --bg: #0f0e0d;
+  --surface: #171513;
+  --line: #2a2622;
+  --text: #ece6dc;
+  --muted: #9a9186;
+  --accent: #b5c99a;
+  --clay: #c98b6b;
 
-  --display: 'Space Grotesk Variable', 'Segoe UI', sans-serif;
-  --body: 'Space Grotesk Variable', 'Segoe UI', system-ui, sans-serif;
-  --mono: 'Space Mono', ui-monospace, Menlo, monospace;
+  --serif: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
+  --sans: 'Inter Variable', 'Segoe UI', system-ui, sans-serif;
+  --ease: cubic-bezier(.22, 1, .36, 1);
 }
 
 * { box-sizing: border-box; }
-html { background: var(--void); scroll-behavior: smooth; }
+html { background: var(--bg); }
 body {
   margin: 0;
-  background: var(--void);
+  background: var(--bg);
   color: var(--text);
-  font: 17px/1.65 var(--body);
+  font: 400 16.5px/1.65 var(--sans);
   padding-inline: 20px;
   -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'ss01', 'cv11';
 }
-h1, h2 { font-family: var(--display); font-weight: 700; line-height: 1.08; letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
-h3 { font-family: var(--body); font-weight: 600; line-height: 1.3; margin: 0; }
-h1 em, h2 em { font-style: normal; color: var(--signal); }
-p { margin: 0; max-width: 64ch; }
-a { color: var(--signal); text-underline-offset: 3px; }
-a:focus-visible, button:focus-visible { outline: 2px solid var(--flare); outline-offset: 3px; border-radius: 4px; }
-::selection { background: var(--signal); color: var(--void); }
+h1, h2 { font-family: var(--serif); font-weight: 400; line-height: 1.02; letter-spacing: -0.015em; margin: 0; text-wrap: balance; }
+h3 { font-family: var(--sans); font-weight: 550; line-height: 1.35; margin: 0; letter-spacing: -0.005em; }
+h1 em, h2 em { font-style: italic; color: var(--accent); }
+p { margin: 0; max-width: 62ch; }
+a { color: var(--text); text-decoration-color: color-mix(in srgb, var(--accent) 60%, transparent); text-underline-offset: 4px; }
+a:hover { text-decoration-color: var(--accent); }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+::selection { background: var(--clay); color: var(--bg); }
 
-.wrap { max-width: 1040px; margin: 0 auto; position: relative; z-index: 1; }
+.wrap { max-width: 1120px; margin: 0 auto; position: relative; z-index: 1; }
 .label {
-  font: 500 0.74rem/1 var(--mono);
-  letter-spacing: 0.16em;
+  font: 500 0.72rem/1 var(--sans);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
 }
-.label b { color: var(--signal); font-weight: 500; }
+.label b { color: var(--accent); font-weight: 500; }
 
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
+/* Buttons: quiet pills; the primary one is filled bone. */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 500 0.92rem var(--sans); padding: 12px 20px; border-radius: 999px;
+  border: 1px solid var(--line); color: var(--text); text-decoration: none;
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  transition: border-color 0.4s var(--ease), background 0.4s var(--ease), transform 0.4s var(--ease), color 0.4s var(--ease);
 }
+.btn:hover { border-color: var(--muted); transform: translateY(-2px); }
+.btn.primary { background: var(--text); border-color: var(--text); color: var(--bg); }
+.btn.primary:hover { background: var(--accent); border-color: var(--accent); }
 
-/* Scroll reveal (only once reveal.ts has marked the page) */
-.js-reveal [data-reveal] { opacity: 0; transform: translateY(28px); transition: opacity 0.8s ease, transform 0.8s cubic-bezier(.2,.7,.2,1); }
+/* Reveals (only once motion.ts has marked the page, so no-JS readers see everything). */
+.js-reveal [data-reveal] { opacity: 0; transform: translateY(24px); transition: opacity 0.9s var(--ease), transform 0.9s var(--ease); }
 .js-reveal [data-reveal].in { opacity: 1; transform: none; }
-
-/* Film grain over everything, very faint */
-.grain {
-  position: fixed; inset: 0; z-index: 20; pointer-events: none; opacity: 0.07; mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+.js-reveal [data-split] .w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: 0.12em; margin-bottom: -0.12em; }
+.js-reveal [data-split] .w > span {
+  display: inline-block; transform: translateY(110%);
+  transition: transform 1s var(--ease) calc(var(--i, 0) * 60ms);
 }
-
-/* Backdrop: a faint dot grid, like graph paper for living things. */
-body::before {
-  content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background-image: radial-gradient(color-mix(in srgb, var(--growth) 16%, transparent) 1px, transparent 1.3px);
-  background-size: 28px 28px;
-  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, #000 20%, transparent 85%);
-  mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, #000 20%, transparent 85%);
-}
+.js-reveal [data-split].in .w > span { transform: none; }
