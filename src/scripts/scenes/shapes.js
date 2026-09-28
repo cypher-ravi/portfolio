@@ -55,8 +55,9 @@ export function brain(n, seed = 7) {
     const side = i % 2 ? 1 : -1;
     let x = R() * 2 - 1, y = R() * 2 - 1, z = R() * 2 - 1;
     const l = Math.hypot(x, y, z) || 1; x /= l; y /= l; z /= l;
-    const fold = 1 + 0.07 * Math.sin(y * 14 + z * 9) * Math.sin(z * 12 - y * 5);
-    out.set([side * (0.08 + Math.abs(x)) * fold, (y * 0.95 + 0.1) * fold, z * 1.3 * fold], i * 3);
+    // Deep folds on the surface and a clear split down the middle.
+    const fold = 1 + 0.12 * Math.sin(y * 16 + z * 10) * Math.sin(z * 14 - y * 6);
+    out.set([side * (0.16 + Math.abs(x) * 0.95) * fold, (y * 0.9 + 0.05) * fold, z * 1.35 * fold], i * 3);
   }
   return out;
 }

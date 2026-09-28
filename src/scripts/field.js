@@ -75,8 +75,8 @@ export function createField(o) {
       void main() {
         vec4 mv = modelViewMatrix * vec4(position, 1.0);
         gl_Position = projectionMatrix * mv;
-        gl_PointSize = (1.3 + aT * 1.5) * uPR * uScale * (${DIST.toFixed(1)} / -mv.z);
-        vC = mix(uA, uB, clamp(position.y * 0.3 + 0.5 + (aT - 0.5) * 0.4, 0.0, 1.0)) * (0.5 + aT * 0.5);
+        gl_PointSize = (1.5 + aT * 1.7) * uPR * uScale * (${DIST.toFixed(1)} / -mv.z);
+        vC = mix(uA, uB, clamp(position.y * 0.3 + 0.5 + (aT - 0.5) * 0.4, 0.0, 1.0)) * (0.7 + aT * 0.6);
       }`,
     fragmentShader: `
       varying vec3 vC;
@@ -192,7 +192,8 @@ export function createField(o) {
     if (!drag) { vel *= Math.pow(0.05, dt); rotY += vel * dt; }
     if (flat) rotY += (Math.round(rotY / (Math.PI * 2)) * Math.PI * 2 - rotY) * Math.min(1, dt * 1.5);
     spin.rotation.y = rotY + (still ? 0 : flat ? Math.sin(time * 0.5) * 0.22 : time * 0.22);
-    holder.rotation.x += (lean.y * 0.12 - holder.rotation.x) * (still ? 1 : Math.min(1, dt * 2));
+    const tilt = shape === 3 ? 0.45 : 0; // look down on the brain so its halves read
+    holder.rotation.x += (tilt + lean.y * 0.12 - holder.rotation.x) * (still ? 1 : Math.min(1, dt * 2));
     holder.updateMatrixWorld();
 
     const tgt = targets[shape];
