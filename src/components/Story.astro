@@ -1,5 +1,5 @@
 ---
-// The opening story: five acts over a sticky Three.js canvas.
+// The opening story: four acts over a sticky Three.js canvas.
 // All text is plain HTML in the acts; the canvas is decoration only.
 import { profile, story } from '../data/profile';
 ---
@@ -17,9 +17,9 @@ import { profile, story } from '../data/profile';
   <div class="acts">
     <article class="act first">
       <div class="cap">
-        <p class="label tone-0">● Signal acquired · 1420.405 MHz · hydrogen line</p>
+        <p class="label tone-0">● Signal acquired · 1420.405 MHz</p>
         <h1>{profile.headline}</h1>
-        <p class="sub">{profile.name} · {profile.role} · {profile.location}</p>
+        <p class="sub">{profile.name} · {profile.intro}</p>
         <div class="ctas">
           <a class="btn primary" href={profile.links.resume}>Resume</a>
           <a class="btn" href={`mailto:${profile.email}`}>Email</a>
@@ -30,9 +30,8 @@ import { profile, story } from '../data/profile';
     {story.map((a, i) => (
       <article class="act">
         <div class="cap">
-          <p class={`label tone-${i + 1}`}>Act {i + 2} · {a.act} · {a.motivation}</p>
+          <p class={`label tone-${i + 1}`}>Act {i + 2} · {a.act}</p>
           <h2>{a.title}</h2>
-          <p>{a.body}</p>
           <a href={a.href}>{a.link} ↓</a>
         </div>
       </article>
@@ -83,8 +82,8 @@ import { profile, story } from '../data/profile';
   .btn.primary { background: var(--signal); border-color: var(--signal); color: var(--void); }
 
   .cap .label { font-size: 0.72rem; }
-  .cap .tone-0 { color: var(--signal); } .cap .tone-1 { color: var(--pulse); } .cap .tone-2 { color: var(--mind); }
-  .cap .tone-3 { color: var(--growth); } .cap .tone-4 { color: var(--flare); }
+  .cap .tone-0 { color: var(--signal); } .cap .tone-1 { color: var(--mind); } .cap .tone-2 { color: var(--growth); }
+  .cap .tone-3 { color: var(--flare); }
 
   @media (min-width: 760px) {
     .act { padding-inline: max(20px, calc((100vw - 1040px) / 2)); }
@@ -101,7 +100,7 @@ import { profile, story } from '../data/profile';
   const track = document.getElementById('story-track')!;
   const actEl = document.getElementById('story-act')!;
   const breathEl = document.getElementById('story-breath')!;
-  const TONES = ['var(--signal)', 'var(--pulse)', 'var(--mind)', 'var(--growth)', 'var(--flare)'];
+  const TONES = ['var(--signal)', 'var(--mind)', 'var(--growth)', 'var(--flare)'];
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   let progress = 0;
