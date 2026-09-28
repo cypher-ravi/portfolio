@@ -1,19 +1,20 @@
 ---
 import Base from '../layouts/Base.astro';
 import Story from '../components/Story.astro';
-import { profile, glance, work, lab, principles } from '../data/profile';
+import { profile, glance, experience, education, work, lab, principles } from '../data/profile';
 
 // 1420.405 MHz is the hydrogen line, the frequency radio astronomers (and Contact's Ellie Arroway) listen on.
 const FREQ = '1420.405 MHz';
 ---
 <Base
   title={`${profile.name} · ${profile.role}`}
-  description={`${profile.name}, ${profile.role}. ${profile.headline}`}
+  description={`${profile.name}, ${profile.role}. ${profile.headline.join(' ')}`}
 >
   <header class="bar">
     <div class="wrap bar-inner">
       <a class="mark" href="#story">{profile.name}</a>
       <nav aria-label="Sections">
+        <a href="#experience">Experience</a>
         <a href="#work">Work</a>
         <a href="#ai">AI</a>
         <a href="#lab">Projects</a>
@@ -36,6 +37,22 @@ const FREQ = '1420.405 MHz';
         <span class="label">Status</span>
         <strong class="ok">{profile.availability}</strong>
       </div>
+    </section>
+
+    <section id="experience" class="block">
+      <p class="label">Experience</p>
+      <ol class="roles">
+        {experience.map((r) => (
+          <li>
+            <div class="role-head">
+              <h3>{r.title}, {r.company}</h3>
+              <span class="period">{r.period}</span>
+            </div>
+            <ul class="points">{r.points.map((p) => <li>{p}</li>)}</ul>
+          </li>
+        ))}
+      </ol>
+      <p class="edu">{education}</p>
     </section>
 
     <section id="work" class="block">
@@ -82,6 +99,8 @@ const FREQ = '1420.405 MHz';
       <div class="ctas">
         <a class="btn primary" href={`mailto:${profile.email}`}>Send an email</a>
         <a class="btn" href={profile.links.linkedin}>LinkedIn</a>
+        <a class="btn" href={profile.links.github}>GitHub</a>
+        <a class="btn" href={profile.links.leetcode}>LeetCode</a>
       </div>
     </section>
   </main>
@@ -103,14 +122,14 @@ const FREQ = '1420.405 MHz';
     border-bottom: 1px solid var(--line);
   }
   .bar-inner { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-block: 14px; }
-  .mark { font: 600 0.95rem var(--display); color: var(--text); text-decoration: none; }
-  nav { display: flex; gap: 18px; font: 500 0.82rem var(--mono); }
+  .mark { font: 400 1.45rem var(--display); color: var(--text); text-decoration: none; }
+  nav { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px 18px; font: 500 0.88rem var(--body); }
   nav a { color: var(--muted); text-decoration: none; }
   nav a:hover { color: var(--signal); }
 
   .ctas { display: flex; flex-wrap: wrap; gap: 12px; }
   .btn {
-    font: 500 0.9rem var(--mono);
+    font: 500 0.92rem var(--body);
     padding: 11px 18px;
     border: 1px solid var(--signal-dim);
     border-radius: 6px;
@@ -137,8 +156,13 @@ const FREQ = '1420.405 MHz';
   .ok { color: var(--flare); }
 
   .block { padding-block: 96px 0; display: grid; gap: 22px; }
-  h2 { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 600; }
-  h3 { font-size: 1.05rem; font-weight: 600; }
+  h2 { font-size: clamp(2rem, 4.4vw, 2.8rem); }
+  h3 { font-size: 1.05rem; }
+  .roles { list-style: none; margin: 0; padding: 0; display: grid; }
+  .roles > li { display: grid; gap: 10px; padding-block: 22px; border-top: 1px solid var(--line); }
+  .role-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; align-items: baseline; }
+  .period { font: 0.8rem var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+  .edu { max-width: none; color: var(--muted); font-size: 0.95rem; padding-top: 18px; border-top: 1px solid var(--line); }
 
   .work {
     border: 1px solid var(--line);
@@ -154,7 +178,7 @@ const FREQ = '1420.405 MHz';
   .tldr { font-size: 1.05rem; }
   .points { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; color: var(--muted); }
 
-  .principles { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; font: 600 clamp(1.15rem, 2.6vw, 1.6rem)/1.3 var(--display); }
+  .principles { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; font: 400 clamp(1.6rem, 3.6vw, 2.3rem)/1.2 var(--display); }
   .principles li { padding-top: 14px; border-top: 1px solid var(--line); }
 
   .lab { list-style: none; margin: 0; padding: 0; display: grid; }
