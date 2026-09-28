@@ -4,8 +4,6 @@ import Story from '../components/Story.astro';
 import PageTree from '../components/PageTree.astro';
 import { profile, glance, experience, education, projects, principles } from '../data/profile';
 
-// 1420.405 MHz is the hydrogen line, the frequency radio astronomers (and Contact's Ellie Arroway) listen on.
-const FREQ = '1420.405 MHz';
 const pad = (n: number) => String(n).padStart(2, '0');
 ---
 <Base
@@ -51,7 +49,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
           <span class="pin-count label"><b id="j-num">01</b> / {pad(experience.length)}</span>
           <span class="pin-period" id="j-period">{experience[0].period}</span>
           <span class="pin-company" id="j-company">{experience[0].company}</span>
-          <span class="pin-orbit"><i id="j-dot"></i></span>
+          <span class="pin-rings" id="j-rings">{experience.map((_, k) => <i style={`--k:${k}`}></i>)}</span>
         </aside>
         <ol class="timeline" id="timeline">
           <span class="rail" aria-hidden="true"><i id="rail-fill"></i></span>
@@ -157,7 +155,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
   </main>
 
   <footer class="wrap foot">
-    <span class="label">End of transmission · {FREQ}</span>
+    <span class="label">Planted in 2020 · still growing</span>
     <a href="#story">Back to top ↑</a>
   </footer>
 </Base>
@@ -206,7 +204,10 @@ const pad = (n: number) => String(n).padStart(2, '0');
   const jNum = document.getElementById('j-num')!;
   const jPeriod = document.getElementById('j-period')!;
   const jCompany = document.getElementById('j-company')!;
-  const jDot = document.getElementById('j-dot')!;
+  // Growth rings: one per role, newest outside. Reading further back dims the newer rings.
+  const rings = [...document.querySelectorAll<HTMLElement>('#j-rings i')];
+  const setRings = (i: number) => rings.forEach((r, k) => { r.classList.toggle('on', k >= i); r.classList.toggle('now', k === i); });
+  setRings(0);
   let activeRole = 0;
   const setRole = (i: number) => {
     if (i === activeRole) return;
@@ -216,7 +217,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
     jNum.textContent = pad(i + 1);
     jPeriod.textContent = li.dataset.period ?? '';
     jCompany.textContent = li.dataset.company ?? '';
-    jDot.style.setProperty('--turn', `${(i / roles.length) * 360}deg`);
+    setRings(i);
     jCompany.animate?.([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: reduced ? 0 : 380, easing: 'ease-out' });
   };
   roles[0].classList.add('on');
@@ -290,7 +291,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
     border-bottom: 1px solid var(--line);
   }
   .bar-inner { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-block: 12px; }
-  .mark { font: 700 1.15rem var(--display); letter-spacing: 0.08em; color: var(--text); text-decoration: none; }
+  .mark { font: 700 1.15rem var(--display); letter-spacing: -0.01em; color: var(--text); text-decoration: none; }
   nav { display: flex; align-items: center; gap: 22px; font: 500 0.9rem var(--body); }
   nav a { color: var(--muted); text-decoration: none; transition: color 0.2s; position: relative; }
   nav a:hover, nav a[aria-current] { color: var(--text); }
@@ -338,22 +339,14 @@ const pad = (n: number) => String(n).padStart(2, '0');
   }
   .pin-count b { color: var(--signal); font-weight: 500; }
   .pin-period { font: 500 0.85rem var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
-  .pin-company { font: 600 clamp(1.4rem, 2.2vw, 1.8rem)/1.2 var(--display); min-height: 2.2em; }
-  .pin-orbit {
-    position: relative; width: 120px; aspect-ratio: 1; margin-top: 8px; border-radius: 50%;
-    border: 1px dashed var(--signal-dim);
+  .pin-company { font: 700 clamp(1.4rem, 2.2vw, 1.8rem)/1.2 var(--display); min-height: 2.2em; }
+  .pin-rings { position: relative; width: 120px; aspect-ratio: 1; margin-top: 8px; }
+  .pin-rings i {
+    position: absolute; inset: calc(var(--k) * 14px); border-radius: 50%;
+    border: 1px solid var(--line); transition: border-color 0.5s, box-shadow 0.5s;
   }
-  .pin-orbit::before {
-    content: ''; position: absolute; inset: 42%; border-radius: 50%; background: var(--flare); box-shadow: 0 0 18px var(--flare);
-  }
-  .pin-orbit i {
-    --turn: 0deg; position: absolute; inset: 0; transform: rotate(var(--turn)); transition: transform 0.7s cubic-bezier(.2,.7,.2,1);
-  }
-  .pin-orbit i::after {
-    content: ''; position: absolute; top: -5px; left: calc(50% - 5px); width: 10px; height: 10px; border-radius: 50%;
-    background: var(--signal); box-shadow: 0 0 12px var(--signal);
-  }
-
+  .pin-rings i.on { border-color: color-mix(in srgb, var(--growth) 45%, transparent); }
+  .pin-rings i.now { border-color: var(--growth); box-shadow: 0 0 12px color-mix(in srgb, var(--growth) 50%, transparent); }
   .timeline { list-style: none; margin: 0; padding: 0 0 0 34px; display: grid; gap: 18px; position: relative; }
   .rail { position: absolute; left: 8px; top: 8px; bottom: 8px; width: 2px; background: var(--line); border-radius: 2px; }
   .rail i {
@@ -406,10 +399,10 @@ const pad = (n: number) => String(n).padStart(2, '0');
     transition: border-color 0.3s, transform 0.3s;
   }
   .card:hover { border-color: color-mix(in srgb, var(--tone) 55%, transparent); transform: translateY(-3px); }
-  .card h3 { font: 600 1.35rem/1.2 var(--display); margin-top: auto; }
+  .card h3 { font: 700 1.35rem/1.2 var(--display); margin-top: auto; }
   .card p { color: var(--muted); font-size: 0.97rem; }
   .kind-lab { background: transparent; border-style: dashed; }
-  .theme-space { --tone: var(--signal); } .theme-health { --tone: #ff9d7a; } .theme-mind { --tone: var(--mind); } .theme-ai { --tone: var(--growth); }
+  .theme-health { --tone: #ff9d7a; } .theme-mind { --tone: var(--mind); } .theme-ai { --tone: var(--growth); }
   .card-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
   .theme { font: 500 0.72rem var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--tone, var(--signal)); }
   .year { font: 0.72rem var(--mono); color: var(--muted); }
@@ -437,7 +430,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .detail[open] { animation: pop 0.25s ease-out; }
   @keyframes pop { from { opacity: 0; transform: translateY(12px) scale(0.98); } }
   .detail-in { display: grid; gap: 16px; padding: 26px; }
-  .detail h3 { font: 600 1.8rem/1.15 var(--display); }
+  .detail h3 { font: 700 1.8rem/1.15 var(--display); }
   .detail .tldr { font-size: 1.08rem; }
   .close {
     width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; line-height: 1;
