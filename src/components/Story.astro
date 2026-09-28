@@ -63,7 +63,7 @@ import { profile, story } from '../data/profile';
   }
   .track { flex: 1; max-width: 260px; height: 2px; background: var(--line); position: relative; color: var(--signal); }
   .track i { position: absolute; inset: 0 auto 0 0; width: 0; background: currentColor; }
-  #story-breath { color: var(--mind); min-width: 9em; text-align: right; }
+  #story-breath { color: var(--mind); min-width: 14em; text-align: right; }
 
   /* Viewfinder: corner marks, a live clock and a scroll cue frame the scene. */
   .frame { position: absolute; inset: 76px 16px 52px; pointer-events: none; }
@@ -117,7 +117,8 @@ import { profile, story } from '../data/profile';
 </style>
 
 <script>
-  import { ACTS } from '../scripts/story-engine.js';
+  // Keep in sync with ACTS in story-engine.js (not imported, so the engine stays lazy-loaded).
+  const ACTS = ['Cosmos', 'Mind', 'Growth', 'Reply'];
 
   const root = document.getElementById('story')!;
   const canvas = document.getElementById('story-gl') as HTMLCanvasElement;
@@ -156,12 +157,13 @@ import { profile, story } from '../data/profile';
     if (!hasWebGL) { root.classList.add('no-gl'); return; }
     const [THREE, { createStory }] = await Promise.all([import('../scripts/three-lite'), import('../scripts/story-engine.js')]);
     const s = createStory({
-      THREE, canvas, word: 'RAVI', reducedMotion,
+      THREE, canvas, reducedMotion,
       getProgress: () => progress,
-      onFrame: ({ act, breath }) => {
+      onFrame: ({ act, note }) => {
         actEl.textContent = `Act ${act + 1} · ${ACTS[act]}`;
         track.style.color = TONES[act];
-        breathEl.textContent = breath;
+        breathEl.textContent = note;
+        breathEl.style.color = TONES[act];
       },
     });
     new IntersectionObserver((es) => s.setVisible(es[0].isIntersecting)).observe(root);
