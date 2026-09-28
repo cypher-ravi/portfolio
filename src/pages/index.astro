@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import Story from '../components/Story.astro';
 import { profile, glance, work, lab, aiNotes } from '../data/profile';
 
 // 1420.405 MHz is the hydrogen line, the frequency radio astronomers (and Contact's Ellie Arroway) listen on.
@@ -11,7 +12,7 @@ const FREQ = '1420.405 MHz';
 >
   <header class="bar">
     <div class="wrap bar-inner">
-      <a class="mark" href="#top">{profile.name}</a>
+      <a class="mark" href="#story">{profile.name}</a>
       <nav aria-label="Sections">
         <a href="#work">Work</a>
         <a href="#protocol">AI</a>
@@ -21,20 +22,10 @@ const FREQ = '1420.405 MHz';
     </div>
   </header>
 
-  <main id="top" class="wrap">
-    <section class="hero">
-      <p class="label"><b>● Signal acquired</b> · {FREQ} · hydrogen line</p>
-      <p class="noise" aria-hidden="true">▚▞▖▗ 0110 ▘▝▚ ░▒▓ 1101 ▞▚▖ ▗▘ 0011 ▓▒░ ▝▚▞</p>
-      <h1 data-decode>{profile.headline}</h1>
-      <p class="sub">{profile.name} · {profile.role} · {profile.location}</p>
-      <div class="ctas">
-        <a class="btn primary" href={profile.links.resume}>Resume</a>
-        <a class="btn" href={`mailto:${profile.email}`}>Email</a>
-        <a class="btn" href={profile.links.github}>GitHub</a>
-      </div>
-    </section>
+  <Story />
 
-    <section class="glance" aria-label="At a glance">
+  <main class="wrap">
+    <section id="glance" class="glance" aria-label="At a glance">
       {glance.map((g) => (
         <div>
           <span class="label">{g.label}</span>
@@ -126,10 +117,6 @@ const FREQ = '1420.405 MHz';
   nav a { color: var(--muted); text-decoration: none; }
   nav a:hover { color: var(--signal); }
 
-  .hero { padding-block: clamp(64px, 12vw, 140px) 56px; display: grid; gap: 22px; }
-  .noise { font: 0.8rem var(--mono); color: var(--signal-dim); letter-spacing: 0.2em; white-space: nowrap; overflow: hidden; max-width: 100%; }
-  h1 { font-size: clamp(2rem, 5.4vw, 3.6rem); font-weight: 600; letter-spacing: -0.015em; max-width: 20ch; }
-  .sub { color: var(--muted); font-family: var(--mono); font-size: 0.9rem; }
   .ctas { display: flex; flex-wrap: wrap; gap: 12px; }
   .btn {
     font: 500 0.9rem var(--mono);
@@ -145,6 +132,8 @@ const FREQ = '1420.405 MHz';
   .btn.primary:hover { background: var(--text); }
 
   .glance {
+    scroll-margin-top: 80px;
+    margin-top: 64px;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     border: 1px solid var(--line);
