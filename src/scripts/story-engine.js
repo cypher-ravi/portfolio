@@ -144,7 +144,7 @@ export function createStory(o) {
 
   // Mind: the connectome. Growth: the tree of life. Both lighter on phones.
   const brain = createConnectome(THREE, glow, { count: small ? 600 : 900 });
-  const tree = createTree(THREE, glow, { depth: small ? 7 : 8, leavesPerTip: 1 });
+  const tree = createTree(THREE, { depth: small ? 7 : 8, leavesPerTip: 1 });
   scene.add(brain.group, tree.group);
   canvas.addEventListener('pointerdown', () => brain.think());
   if (o.reducedMotion) brain.still();
