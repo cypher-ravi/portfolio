@@ -1,0 +1,45 @@
+/* First Contact: a transmission being decoded. Single dark world by design. */
+:root {
+  color-scheme: dark;
+  --void: #05070a;
+  --panel: #0b1117;
+  --line: #16242e;
+  --text: #e8f6ff;
+  --muted: #8aa4b3;
+  --signal: #8fd3ff;
+  --signal-dim: #2b4a5e;
+  --flare: #ffc46b;
+
+  --display: 'Unbounded', 'Segoe UI', system-ui, sans-serif;
+  --body: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+html { background: var(--void); scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--void);
+  color: var(--text);
+  font: 17px/1.65 var(--body);
+  padding-inline: 20px;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 { font-family: var(--display); line-height: 1.15; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 64ch; }
+a { color: var(--signal); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--flare); outline-offset: 3px; border-radius: 4px; }
+::selection { background: var(--signal); color: var(--void); }
+
+.wrap { max-width: 1040px; margin: 0 auto; position: relative; z-index: 1; }
+.label {
+  font: 500 0.74rem/1 var(--mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.label b { color: var(--signal); font-weight: 500; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
