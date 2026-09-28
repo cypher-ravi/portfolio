@@ -1,5 +1,5 @@
 // The Signal: the opening story, drawn with Three.js.
-//   0 Cosmos – a three-body system in a figure-eight orbit, among scattered stars (space tech)
+//   0 Cosmos – scattered stars, with the tree of life growing from seed to now (space, nature)
 //   1 Mind   – a connectome: neurons shaped like a brain, firing thoughts; it breathes 4s in / 4s out (psychology, mental health)
 //   2 Growth – a tree of life that grows with the career as you scroll, leaves glowing as they open (life as a force of nature)
 //   3 Reply  – the stars fold into one beam aimed at the visitor
@@ -10,7 +10,6 @@ import { createTree } from './scenes/tree.js';
 
 export const ACTS = ['Cosmos', 'Mind', 'Growth', 'Reply'];
 const COLORS = [0x8fd3ff, 0xb7a8ff, 0x9fe3a8, 0xffc46b];
-const BODY_COLORS = [0xffc46b, 0x8fd3ff, 0xff9d7a];
 
 const rand = (a, b) => a + Math.random() * (b - a);
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
@@ -19,41 +18,6 @@ const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 export function breath(seconds) {
   const a = (seconds / 8) * Math.PI * 2 - Math.PI / 2;
   return { v: Math.sin(a), phase: Math.cos(a) > 0 ? 'Breathe in' : 'Breathe out' };
-}
-
-/**
- * Three equal masses on the figure-eight orbit (Chenciner & Montgomery, 2000):
- * one of the few stable solutions to the three-body problem. Units: G = m = 1.
- * Integrated with velocity Verlet, which keeps the orbit from drifting.
- */
-export function createThreeBody() {
-  const p = [[-0.97000436, 0.24308753], [0.97000436, -0.24308753], [0, 0]];
-  const v3 = [-0.93240737, -0.86473146];
-  const v = [[-v3[0] / 2, -v3[1] / 2], [-v3[0] / 2, -v3[1] / 2], [v3[0], v3[1]]];
-
-  function accel() {
-    const a = [[0, 0], [0, 0], [0, 0]];
-    for (let i = 0; i < 3; i++) for (let j = i + 1; j < 3; j++) {
-      const dx = p[j][0] - p[i][0], dy = p[j][1] - p[i][1];
-      const r2 = dx * dx + dy * dy + 1e-6, f = 1 / (r2 * Math.sqrt(r2));
-      a[i][0] += dx * f; a[i][1] += dy * f;
-      a[j][0] -= dx * f; a[j][1] -= dy * f;
-    }
-    return a;
-  }
-
-  let a = accel();
-  return {
-    positions: p,
-    step(dt) {
-      for (let i = 0; i < 3; i++) {
-        v[i][0] += 0.5 * dt * a[i][0]; v[i][1] += 0.5 * dt * a[i][1];
-        p[i][0] += dt * v[i][0]; p[i][1] += dt * v[i][1];
-      }
-      a = accel();
-      for (let i = 0; i < 3; i++) { v[i][0] += 0.5 * dt * a[i][0]; v[i][1] += 0.5 * dt * a[i][1]; }
-    },
-  };
 }
 
 function buildShapes(N) {
@@ -104,44 +68,6 @@ export function createStory(o) {
   scene.add(new THREE.Points(geo, mat));
   const palette = COLORS.map((c) => new THREE.Color(c));
 
-  // Three-body system: three suns and their fading trails.
-  const sim = createThreeBody();
-  const system = new THREE.Group();
-  scene.add(system);
-  const TRAIL = 420;
-  const suns = [], trails = [];
-  for (let b = 0; b < 3; b++) {
-    const color = new THREE.Color(BODY_COLORS[b]);
-    const sun = new THREE.Sprite(new THREE.SpriteMaterial({ map: glow, color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
-    sun.scale.set(3.2, 3.2, 1);
-    system.add(sun);
-    suns.push(sun);
-
-    const tp = new Float32Array(TRAIL * 3), tc = new Float32Array(TRAIL * 3);
-    for (let k = 0; k < TRAIL; k++) {
-      const fade = Math.pow(k / (TRAIL - 1), 1.6); // newest point (end) is brightest
-      tc[k * 3] = color.r * fade; tc[k * 3 + 1] = color.g * fade; tc[k * 3 + 2] = color.b * fade;
-    }
-    const tg = new THREE.BufferGeometry();
-    tg.setAttribute('position', new THREE.BufferAttribute(tp, 3));
-    tg.setAttribute('color', new THREE.BufferAttribute(tc, 3));
-    const line = new THREE.Line(tg, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
-    system.add(line);
-    trails.push(tp);
-  }
-  const ORBIT_SCALE = 11;
-  const pushTrail = () => {
-    for (let b = 0; b < 3; b++) {
-      const tp = trails[b];
-      tp.copyWithin(0, 3);
-      tp[TRAIL * 3 - 3] = sim.positions[b][0] * ORBIT_SCALE;
-      tp[TRAIL * 3 - 2] = sim.positions[b][1] * ORBIT_SCALE;
-      tp[TRAIL * 3 - 1] = 0;
-    }
-  };
-  // Pre-roll so the trails are full on the first frame, which is also the reduced-motion still.
-  for (let k = 0; k < TRAIL; k++) { for (let s = 0; s < 3; s++) sim.step(0.0015); pushTrail(); }
-
   // Mind: the connectome. Growth: the tree of life. Both lighter on phones.
   const brain = createConnectome(THREE, glow, { count: small ? 600 : 900 });
   const tree = createTree(THREE, { depth: small ? 7 : 8, leavesPerTip: 1 });
@@ -149,19 +75,20 @@ export function createStory(o) {
   canvas.addEventListener('pointerdown', () => brain.think());
   if (o.reducedMotion) brain.still();
 
-  let current = 0, running = false, visible = true, lastMs = 0, spin = 0;
+  let current = 0, running = false, visible = true, lastMs = 0, spin = 0, startMs = -1;
+  let treeSpots = { hero: [0, 0, 1], growth: [0, 0, 1] };
 
   function layout() {
     const w = canvas.clientWidth, h = canvas.clientHeight;
     const narrow = w / h < 0.8;
-    // Beside the headline on wide screens, above it on phones.
-    system.position.set(narrow ? 0 : 23, narrow ? 24 : 1, 0);
-    system.scale.setScalar(narrow ? 0.9 : 1.3);
     // Scenes sit opposite their captions: Mind's caption is on the right, Growth's on the left.
     brain.group.position.set(narrow ? 0 : -21, narrow ? 16 : 3, 0);
     brain.group.scale.setScalar(narrow ? 13 : 15);
-    tree.group.position.set(narrow ? 0 : 20, narrow ? -6 : -20, 0);
-    tree.group.scale.setScalar(narrow ? 6.2 : 7.2);
+    // The tree appears twice: beside the headline in the hero (above it on phones),
+    // and opposite the caption in Growth.
+    treeSpots = narrow
+      ? { hero: [0, 13, 4], growth: [0, -6, 6.2] }
+      : { hero: [22, -18, 7], growth: [20, -20, 7.2] };
   }
 
   function resize() {
@@ -184,16 +111,6 @@ export function createStory(o) {
     const dt = still ? 0 : Math.min(0.05, lastMs ? (ms - lastMs) / 1000 : 0);
     lastMs = ms;
     const near = (k) => Math.max(0, 1 - Math.abs(current - k));
-
-    // Three-body: advance the orbit and fade it out as the story moves on.
-    if (!still) { for (let s = 0; s < 8; s++) sim.step(0.0015); pushTrail(); }
-    for (let b = 0; b < 3; b++) {
-      suns[b].position.set(sim.positions[b][0] * ORBIT_SCALE, sim.positions[b][1] * ORBIT_SCALE, 0);
-      system.children[b * 2 + 1].geometry.attributes.position.needsUpdate = true;
-    }
-    const sysAlpha = Math.max(0, 1 - current * 1.6);
-    system.visible = sysAlpha > 0.01;
-    system.children.forEach((c) => { c.material.opacity = sysAlpha; });
 
     // Story particles: stars that pull back for Mind and Growth, then fold into the reply beam.
     const b = breath(time);
@@ -219,16 +136,22 @@ export function createStory(o) {
       brain.update(wBrain > 0.01 ? dt : 0, wBrain);
     }
 
-    // Growth: scrolling grows the tree from 2020 to now; leaves glow as they open.
-    const wTree = Math.pow(near(2), 1.2);
-    const g = Math.min(1, Math.max(0, (current - 1.35) / 0.6));
+    // The tree of life. In the hero it grows from seed to now on its own when the page
+    // opens; in Growth, scrolling grows it again from 2020, leaves glowing as they open.
+    if (startMs < 0) startMs = ms;
+    const intro = still ? 1 : Math.min(1, (ms - startMs) / 6000);
+    const inHero = current < 1;
+    const g = inHero ? intro : Math.min(1, Math.max(0, (current - 1.35) / 0.6));
+    const spot = inHero ? treeSpots.hero : treeSpots.growth;
+    tree.group.position.set(spot[0], spot[1], 0);
+    tree.group.scale.setScalar(spot[2]);
     tree.group.rotation.y = 0.4 + time * 0.08;
-    tree.update(g, time, wTree);
+    tree.update(g, time, Math.pow(inHero ? near(0) : near(2), 1.2));
 
     renderer.render(scene, camera);
 
     const act = Math.min(ACTS.length - 1, Math.round(current));
-    const note = act === 1 && !still ? b.phase : act === 2 ? tree.chapter(g) : '';
+    const note = act === 1 && !still ? b.phase : act === 0 || act === 2 ? tree.chapter(g) : '';
     o.onFrame?.({ act, note });
     if (running && visible && !still) requestAnimationFrame(frame);
   }
