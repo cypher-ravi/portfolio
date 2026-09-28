@@ -58,7 +58,7 @@ import { profile, story } from '../data/profile';
     position: absolute; left: 0; right: 0; bottom: 0;
     padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
     display: flex; justify-content: space-between; align-items: center; gap: 12px;
-    font: 500 0.7rem var(--body); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+    font: 400 0.7rem var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
     pointer-events: none;
   }
   .track { flex: 1; max-width: 260px; height: 2px; background: var(--line); position: relative; color: var(--signal); }
@@ -74,7 +74,7 @@ import { profile, story } from '../data/profile';
   .frame i:nth-child(4) { bottom: 0; right: 0; border-width: 0 1px 1px 0; }
   .hud-top {
     position: absolute; top: 90px; left: 32px; right: 32px; display: flex; justify-content: space-between; gap: 12px;
-    font: 500 0.7rem var(--body); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); pointer-events: none;
+    font: 400 0.7rem var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); pointer-events: none;
   }
   .hud-top b { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
   .cue { transition: opacity 0.4s; }
@@ -91,12 +91,12 @@ import { profile, story } from '../data/profile';
     background: color-mix(in srgb, var(--void) 72%, transparent);
     border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; backdrop-filter: blur(6px);
   }
-  .cap h2 { font-size: clamp(1.7rem, 3.6vw, 2.3rem); }
+  .cap h2 { font-size: clamp(1.4rem, 3vw, 1.9rem); }
   .cap p { color: var(--muted); font-size: 0.97rem; }
   .cap > a { font: 500 0.9rem var(--body); }
   .act.first { align-items: center; padding-block: 0; }
   .act.first .cap { max-width: 560px; background: none; border: 0; backdrop-filter: none; padding: 0; gap: 20px; }
-  h1 { font-size: clamp(2.5rem, 6vw, 4.1rem); line-height: 1.04; }
+  h1 { font-size: clamp(2rem, 4.6vw, 3.3rem); line-height: 1.12; }
   .sub { font-size: 1.05rem; }
   .ctas { display: flex; flex-wrap: wrap; gap: 12px; }
   .btn {
