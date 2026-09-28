@@ -30,10 +30,11 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
   </head>
   <body>
     <SignalField />
+    <div class="grain" aria-hidden="true"></div>
     <slot />
     <script>
-      import { decodeAll } from '../scripts/decode';
-      decodeAll();
+      import { revealAll } from '../scripts/reveal';
+      revealAll();
     </script>
   </body>
 </html>

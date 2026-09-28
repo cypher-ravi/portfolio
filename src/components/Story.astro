@@ -7,6 +7,11 @@ import { profile, story } from '../data/profile';
   <div class="stage">
     <canvas id="story-gl" aria-hidden="true"></canvas>
     <div class="still" aria-hidden="true"></div>
+    <div class="frame" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <div class="hud-top" aria-hidden="true">
+      <span>Local time · India <b id="clock">--:--</b> IST</span>
+      <span class="cue" id="cue">Scroll to decode <span>↓</span></span>
+    </div>
     <div class="hud" aria-hidden="true">
       <span id="story-act">Act 1 · Cosmos</span>
       <span class="track" id="story-track"><i id="story-progress"></i></span>
@@ -32,6 +37,7 @@ import { profile, story } from '../data/profile';
         <div class="cap">
           <p class={`label tone-${i + 1}`}>Act {i + 2} · {a.act}</p>
           <h2>{a.title}</h2>
+          <p>{a.body}</p>
           <a href={a.href}>{a.link} ↓</a>
         </div>
       </article>
@@ -58,6 +64,25 @@ import { profile, story } from '../data/profile';
   .track { flex: 1; max-width: 260px; height: 2px; background: var(--line); position: relative; color: var(--signal); }
   .track i { position: absolute; inset: 0 auto 0 0; width: 0; background: currentColor; }
   #story-breath { color: var(--mind); min-width: 9em; text-align: right; }
+
+  /* Viewfinder: corner marks, a live clock and a scroll cue frame the scene. */
+  .frame { position: absolute; inset: 76px 16px 52px; pointer-events: none; }
+  .frame i { position: absolute; width: 22px; height: 22px; border: 0 solid var(--signal-dim); }
+  .frame i:nth-child(1) { top: 0; left: 0; border-width: 1px 0 0 1px; }
+  .frame i:nth-child(2) { top: 0; right: 0; border-width: 1px 1px 0 0; }
+  .frame i:nth-child(3) { bottom: 0; left: 0; border-width: 0 0 1px 1px; }
+  .frame i:nth-child(4) { bottom: 0; right: 0; border-width: 0 1px 1px 0; }
+  .hud-top {
+    position: absolute; top: 90px; left: 32px; right: 32px; display: flex; justify-content: space-between; gap: 12px;
+    font: 500 0.7rem var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); pointer-events: none;
+  }
+  .hud-top b { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .cue { transition: opacity 0.4s; }
+  .cue span { display: inline-block; color: var(--signal); animation: drift 1.8s ease-in-out infinite; }
+  .cue.gone { opacity: 0; }
+  @keyframes drift { 50% { transform: translateY(4px); } }
+  @media (max-width: 560px) { .hud-top { top: 84px; left: 26px; right: 26px; } .cue { display: none; } }
+  @media (prefers-reduced-motion: reduce) { .cue span { animation: none; } }
 
   .acts { position: relative; margin-top: -100vh; margin-top: -100svh; pointer-events: none; }
   .act { min-height: 100vh; min-height: 100svh; display: flex; align-items: flex-end; padding-inline: 20px; padding-block: 0 16vh; }
@@ -103,12 +128,21 @@ import { profile, story } from '../data/profile';
   const TONES = ['var(--signal)', 'var(--mind)', 'var(--growth)', 'var(--flare)'];
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // Live clock for the viewfinder (India Standard Time).
+  const clock = document.getElementById('clock')!;
+  const fmt = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' });
+  const tick = () => (clock.textContent = fmt.format(new Date()));
+  tick();
+  setInterval(tick, 15000);
+  const cue = document.getElementById('cue')!;
+
   let progress = 0;
   const readScroll = () => {
     const r = root.getBoundingClientRect();
     const total = root.offsetHeight - innerHeight;
     progress = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 0;
     bar.style.width = `${(progress * 100).toFixed(1)}%`;
+    cue.classList.toggle('gone', progress > 0.02);
   };
   readScroll();
   addEventListener('scroll', readScroll, { passive: true });
