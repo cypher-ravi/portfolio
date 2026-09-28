@@ -288,7 +288,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
     border-bottom: 1px solid var(--line);
   }
   .bar-inner { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-block: 12px; }
-  .mark { font: 400 1.5rem var(--display); color: var(--text); text-decoration: none; }
+  .mark { letter-spacing: -0.025em; font: 500 1.5rem var(--body); color: var(--text); text-decoration: none; }
   nav { display: flex; align-items: center; gap: 22px; font: 500 0.9rem var(--body); }
   nav a { color: var(--muted); text-decoration: none; transition: color 0.2s; position: relative; }
   nav a:hover, nav a[aria-current] { color: var(--text); }
@@ -326,7 +326,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .points { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; color: var(--muted); }
   .points li::marker { color: var(--signal-dim); }
   .tags { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; }
-  .tags li { font: 0.74rem/1 var(--mono); padding: 6px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); }
+  .tags li { font: 0.74rem/1 var(--body); padding: 6px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); }
 
   /* Journey: pinned panel on the left, timeline on a glowing rail on the right */
   .journey { display: grid; grid-template-columns: 300px 1fr; gap: 48px; align-items: start; }
@@ -335,8 +335,8 @@ const pad = (n: number) => String(n).padStart(2, '0');
     border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 60%, transparent); backdrop-filter: blur(10px);
   }
   .pin-count b { color: var(--signal); font-weight: 500; }
-  .pin-period { font: 500 0.85rem var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
-  .pin-company { font: 400 clamp(2rem, 3.2vw, 2.6rem)/1.05 var(--display); min-height: 2.2em; }
+  .pin-period { font: 500 0.85rem var(--body); color: var(--muted); font-variant-numeric: tabular-nums; }
+  .pin-company { letter-spacing: -0.025em; font: 500 clamp(2rem, 3.2vw, 2.6rem)/1.05 var(--body); min-height: 2.2em; }
   .pin-orbit {
     position: relative; width: 120px; aspect-ratio: 1; margin-top: 8px; border-radius: 50%;
     border: 1px dashed var(--signal-dim);
@@ -370,7 +370,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
     background: var(--void); border: 2px solid var(--signal-dim); transition: background 0.4s, border-color 0.4s, box-shadow 0.4s;
   }
   .timeline > li.on::before { background: var(--signal); border-color: var(--signal); box-shadow: 0 0 12px var(--signal); }
-  .period { font: 0.8rem var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+  .period { font: 0.8rem var(--body); color: var(--muted); font-variant-numeric: tabular-nums; }
   .current .period { color: var(--signal); }
   .role { display: grid; gap: 12px; }
   .at { color: var(--muted); font-weight: 400; }
@@ -404,15 +404,15 @@ const pad = (n: number) => String(n).padStart(2, '0');
     transition: border-color 0.3s, transform 0.3s;
   }
   .card:hover { border-color: color-mix(in srgb, var(--tone) 55%, transparent); transform: translateY(-3px); }
-  .card h3 { font: 400 2rem/1.05 var(--display); margin-top: auto; }
+  .card h3 { letter-spacing: -0.025em; font: 500 2rem/1.05 var(--body); margin-top: auto; }
   .card p { color: var(--muted); font-size: 0.97rem; }
   .kind-lab { background: transparent; border-style: dashed; }
   .theme-space { --tone: var(--signal); } .theme-health { --tone: #ff9d7a; } .theme-mind { --tone: var(--mind); } .theme-ai { --tone: var(--growth); }
   .card-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  .theme { font: 500 0.72rem var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--tone, var(--signal)); }
-  .year { font: 0.72rem var(--mono); color: var(--muted); }
+  .theme { font: 500 0.72rem var(--body); letter-spacing: 0.12em; text-transform: uppercase; color: var(--tone, var(--signal)); }
+  .year { font: 0.72rem var(--body); color: var(--muted); }
   .card-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding-top: 14px; border-top: 1px solid var(--line); }
-  .kind { font: 0.74rem var(--mono); color: var(--muted); }
+  .kind { font: 0.74rem var(--body); color: var(--muted); }
   .more {
     font: 500 0.82rem var(--body); padding: 7px 13px; border-radius: 999px; cursor: pointer;
     border: 1px solid var(--signal-dim); background: none; color: var(--text); transition: border-color 0.2s, background 0.2s;
@@ -435,7 +435,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .detail[open] { animation: pop 0.25s ease-out; }
   @keyframes pop { from { opacity: 0; transform: translateY(12px) scale(0.98); } }
   .detail-in { display: grid; gap: 16px; padding: 26px; }
-  .detail h3 { font: 400 2.4rem/1 var(--display); }
+  .detail h3 { letter-spacing: -0.025em; font: 500 2.4rem/1 var(--body); }
   .detail .tldr { font-size: 1.08rem; }
   .close {
     width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; line-height: 1;
@@ -446,16 +446,16 @@ const pad = (n: number) => String(n).padStart(2, '0');
   /* AI */
   .principles { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
   .principles li { display: grid; gap: 10px; align-content: start; padding-top: 18px; border-top: 1px solid var(--signal-dim); }
-  .p-title { font: 400 clamp(1.5rem, 2.4vw, 1.9rem)/1.15 var(--display); }
+  .p-title { letter-spacing: -0.025em; font: 500 clamp(1.5rem, 2.4vw, 1.9rem)/1.15 var(--body); }
   .p-body { color: var(--muted); font-size: 0.97rem; }
 
   /* Contact */
   .contact { padding-bottom: 40px; gap: 26px; }
   .lede { font-size: 1.1rem; color: var(--muted); }
   .email-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-  .addr { font: 400 clamp(1.4rem, 3.4vw, 2.2rem) var(--display); color: var(--text); user-select: all; overflow-wrap: anywhere; }
+  .addr { letter-spacing: -0.025em; font: 500 clamp(1.4rem, 3.4vw, 2.2rem) var(--body); color: var(--text); user-select: all; overflow-wrap: anywhere; }
   .copy {
-    font: 500 0.8rem var(--mono); padding: 7px 12px; border-radius: 999px; cursor: pointer;
+    font: 500 0.8rem var(--body); padding: 7px 12px; border-radius: 999px; cursor: pointer;
     border: 1px solid var(--signal-dim); background: none; color: var(--signal);
   }
   .copy:hover { border-color: var(--signal); }

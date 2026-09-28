@@ -58,7 +58,7 @@ import { profile, story } from '../data/profile';
     position: absolute; left: 0; right: 0; bottom: 0;
     padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
     display: flex; justify-content: space-between; align-items: center; gap: 12px;
-    font: 500 0.7rem var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+    font: 500 0.7rem var(--body); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
     pointer-events: none;
   }
   .track { flex: 1; max-width: 260px; height: 2px; background: var(--line); position: relative; color: var(--signal); }
@@ -74,7 +74,7 @@ import { profile, story } from '../data/profile';
   .frame i:nth-child(4) { bottom: 0; right: 0; border-width: 0 1px 1px 0; }
   .hud-top {
     position: absolute; top: 90px; left: 32px; right: 32px; display: flex; justify-content: space-between; gap: 12px;
-    font: 500 0.7rem var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); pointer-events: none;
+    font: 500 0.7rem var(--body); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); pointer-events: none;
   }
   .hud-top b { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
   .cue { transition: opacity 0.4s; }
@@ -95,8 +95,8 @@ import { profile, story } from '../data/profile';
   .cap p { color: var(--muted); font-size: 0.97rem; }
   .cap > a { font: 500 0.9rem var(--body); }
   .act.first { align-items: center; padding-block: 0; }
-  .act.first .cap { max-width: 640px; background: none; border: 0; backdrop-filter: none; padding: 0; gap: 20px; }
-  h1 { font-size: clamp(2.8rem, 7vw, 4.8rem); line-height: 1.02; }
+  .act.first .cap { max-width: 560px; background: none; border: 0; backdrop-filter: none; padding: 0; gap: 20px; }
+  h1 { font-size: clamp(2.5rem, 6vw, 4.1rem); line-height: 1.04; }
   .sub { font-size: 1.05rem; }
   .ctas { display: flex; flex-wrap: wrap; gap: 12px; }
   .btn {
