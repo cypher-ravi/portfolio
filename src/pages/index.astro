@@ -1,0 +1,198 @@
+---
+import Base from '../layouts/Base.astro';
+import { profile, glance, work, lab, aiNotes } from '../data/profile';
+
+// 1420.405 MHz is the hydrogen line, the frequency radio astronomers (and Contact's Ellie Arroway) listen on.
+const FREQ = '1420.405 MHz';
+---
+<Base
+  title={`${profile.name} · ${profile.role}`}
+  description={`${profile.name}, ${profile.role}. ${profile.headline}`}
+>
+  <header class="bar">
+    <div class="wrap bar-inner">
+      <a class="mark" href="#top">{profile.name}</a>
+      <nav aria-label="Sections">
+        <a href="#work">Work</a>
+        <a href="#protocol">AI</a>
+        <a href="#lab">Lab</a>
+        <a href="#reply">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top" class="wrap">
+    <section class="hero">
+      <p class="label"><b>● Signal acquired</b> · {FREQ} · hydrogen line</p>
+      <p class="noise" aria-hidden="true">▚▞▖▗ 0110 ▘▝▚ ░▒▓ 1101 ▞▚▖ ▗▘ 0011 ▓▒░ ▝▚▞</p>
+      <h1 data-decode>{profile.headline}</h1>
+      <p class="sub">{profile.name} · {profile.role} · {profile.location}</p>
+      <div class="ctas">
+        <a class="btn primary" href={profile.links.resume}>Resume</a>
+        <a class="btn" href={`mailto:${profile.email}`}>Email</a>
+        <a class="btn" href={profile.links.github}>GitHub</a>
+      </div>
+    </section>
+
+    <section class="glance" aria-label="At a glance">
+      {glance.map((g) => (
+        <div>
+          <span class="label">{g.label}</span>
+          <strong>{g.value}</strong>
+        </div>
+      ))}
+      <div>
+        <span class="label">Status</span>
+        <strong class="ok">{profile.availability}</strong>
+      </div>
+    </section>
+
+    <section id="work" class="block">
+      <p class="label">Transmission · selected work</p>
+      <h2 data-decode>Systems I have built and owned</h2>
+      {work.map((w) => (
+        <article class="work">
+          <div class="work-head">
+            <h3>{w.name}</h3>
+            <ul class="stack">{w.stack.map((s) => <li>{s}</li>)}</ul>
+          </div>
+          <p class="tldr">{w.tldr}</p>
+          <ul class="points">{w.points.map((p) => <li>{p}</li>)}</ul>
+          {w.href && <a href={w.href}>Read the case study</a>}
+        </article>
+      ))}
+    </section>
+
+    <section id="protocol" class="block">
+      <p class="label">Protocol · how I use AI</p>
+      <h2 data-decode>Practical AI, held to engineering standards</h2>
+      <div class="notes">
+        {aiNotes.map((n) => (
+          <div class="note">
+            <h3>{n.title}</h3>
+            <p>{n.body}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <section id="lab" class="block">
+      <p class="label">Lab · small experiments</p>
+      <h2 data-decode>Things I am building in the open</h2>
+      <ul class="lab">
+        {lab.map((x) => (
+          <li>
+            <span class={`status ${x.status}`}>{x.status}</span>
+            <div>
+              <h3>{x.name}</h3>
+              <p>{x.blurb}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section id="reply" class="block reply">
+      <p class="label">Reply to this signal</p>
+      <h2 data-decode>Hiring for a senior engineer who knows AI?</h2>
+      <p>The fastest way to reach me is email. I reply within a day.</p>
+      <p class="addr">{profile.email}</p>
+      <div class="ctas">
+        <a class="btn primary" href={`mailto:${profile.email}`}>Send an email</a>
+        <a class="btn" href={profile.links.linkedin}>LinkedIn</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="wrap foot">
+    <span class="label">End of transmission · {FREQ}</span>
+  </footer>
+</Base>
+
+<style>
+  .bar {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    margin-inline: -20px;
+    padding-inline: 20px;
+    background: color-mix(in srgb, var(--void) 82%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+  }
+  .bar-inner { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-block: 14px; }
+  .mark { font: 600 0.95rem var(--display); color: var(--text); text-decoration: none; }
+  nav { display: flex; gap: 18px; font: 500 0.82rem var(--mono); }
+  nav a { color: var(--muted); text-decoration: none; }
+  nav a:hover { color: var(--signal); }
+
+  .hero { padding-block: clamp(64px, 12vw, 140px) 56px; display: grid; gap: 22px; }
+  .noise { font: 0.8rem var(--mono); color: var(--signal-dim); letter-spacing: 0.2em; white-space: nowrap; overflow: hidden; max-width: 100%; }
+  h1 { font-size: clamp(2rem, 5.4vw, 3.6rem); font-weight: 600; letter-spacing: -0.015em; max-width: 20ch; }
+  .sub { color: var(--muted); font-family: var(--mono); font-size: 0.9rem; }
+  .ctas { display: flex; flex-wrap: wrap; gap: 12px; }
+  .btn {
+    font: 500 0.9rem var(--mono);
+    padding: 11px 18px;
+    border: 1px solid var(--signal-dim);
+    border-radius: 6px;
+    color: var(--text);
+    text-decoration: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .btn:hover { border-color: var(--signal); }
+  .btn.primary { background: var(--signal); border-color: var(--signal); color: var(--void); }
+  .btn.primary:hover { background: var(--text); }
+
+  .glance {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--panel) 85%, transparent);
+  }
+  .glance div { display: grid; gap: 8px; padding: 18px 20px; border-left: 1px solid var(--line); }
+  .glance div:first-child { border-left: 0; }
+  .glance strong { font-weight: 500; font-size: 0.98rem; }
+  .ok { color: var(--flare); }
+
+  .block { padding-block: 96px 0; display: grid; gap: 22px; }
+  h2 { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 600; }
+  h3 { font-size: 1.05rem; font-weight: 600; }
+
+  .work {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 24px;
+    display: grid;
+    gap: 14px;
+    background: color-mix(in srgb, var(--panel) 85%, transparent);
+  }
+  .work-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: center; }
+  .stack { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; }
+  .stack li { font: 0.72rem/1 var(--mono); padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); }
+  .tldr { font-size: 1.05rem; }
+  .points { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; color: var(--muted); }
+
+  .notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 28px; }
+  .note { display: grid; gap: 8px; align-content: start; padding-top: 16px; border-top: 1px solid var(--signal-dim); }
+  .note p { color: var(--muted); font-size: 0.98rem; }
+
+  .lab { list-style: none; margin: 0; padding: 0; display: grid; }
+  .lab li { display: grid; grid-template-columns: 92px 1fr; gap: 18px; padding-block: 18px; border-top: 1px solid var(--line); align-items: baseline; }
+  .lab p { color: var(--muted); font-size: 0.98rem; }
+  .status { font: 500 0.7rem var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .status.building { color: var(--flare); }
+  .status.live { color: var(--signal); }
+
+  .reply { padding-bottom: 40px; }
+  .addr { font: 500 1.1rem var(--mono); color: var(--signal); user-select: all; }
+  .foot { padding-block: 40px 48px; border-top: 1px solid var(--line); margin-top: 80px; }
+
+  @media (max-width: 560px) {
+    nav { gap: 12px; }
+    .glance div { border-left: 0; border-top: 1px solid var(--line); }
+    .glance div:first-child { border-top: 0; }
+    .lab li { grid-template-columns: 1fr; gap: 6px; }
+  }
+</style>
