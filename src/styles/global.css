@@ -1,16 +1,16 @@
-/* Quiet Bonsai: a warm dark room, one living thing, one accent. */
+/* Particle field: a cool dark room, one cloud of light, one accent. */
 :root {
   color-scheme: dark;
-  --bg: #0f0e0d;
-  --surface: #171513;
-  --line: #2a2622;
-  --text: #ece6dc;
-  --muted: #9a9186;
-  --accent: #b5c99a;
-  --clay: #c98b6b;
+  --bg: #0b0c0f;
+  --surface: #121419;
+  --line: #232731;
+  --text: #e9ecf1;
+  --muted: #8b93a1;
+  --accent: #9ab8ff;
 
-  --serif: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
-  --sans: 'Inter Variable', 'Segoe UI', system-ui, sans-serif;
+  --display: 'Space Grotesk Variable', 'Segoe UI', system-ui, sans-serif;
+  --sans: 'Space Grotesk Variable', 'Segoe UI', system-ui, sans-serif;
+  --mono: 'Space Mono', ui-monospace, Menlo, monospace;
   --ease: cubic-bezier(.22, 1, .36, 1);
 }
 
@@ -23,21 +23,20 @@ body {
   font: 400 16.5px/1.65 var(--sans);
   padding-inline: 20px;
   -webkit-font-smoothing: antialiased;
-  font-feature-settings: 'ss01', 'cv11';
 }
-h1, h2 { font-family: var(--serif); font-weight: 400; line-height: 1.02; letter-spacing: -0.015em; margin: 0; text-wrap: balance; }
-h3 { font-family: var(--sans); font-weight: 550; line-height: 1.35; margin: 0; letter-spacing: -0.005em; }
-h1 em, h2 em { font-style: italic; color: var(--accent); }
+h1, h2 { font-family: var(--display); font-weight: 700; line-height: 1.02; letter-spacing: -0.035em; margin: 0; text-wrap: balance; }
+h3 { font-family: var(--sans); font-weight: 600; line-height: 1.35; margin: 0; letter-spacing: -0.005em; }
+h1 em, h2 em { font-style: normal; color: var(--accent); }
 p { margin: 0; max-width: 62ch; }
 a { color: var(--text); text-decoration-color: color-mix(in srgb, var(--accent) 60%, transparent); text-underline-offset: 4px; }
 a:hover { text-decoration-color: var(--accent); }
 a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
-::selection { background: var(--clay); color: var(--bg); }
+::selection { background: var(--accent); color: var(--bg); }
 
 .wrap { max-width: 1120px; margin: 0 auto; position: relative; z-index: 1; }
 .label {
-  font: 500 0.72rem/1 var(--sans);
-  letter-spacing: 0.14em;
+  font: 400 0.72rem/1 var(--mono);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
 }
