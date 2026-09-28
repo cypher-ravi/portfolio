@@ -1,15 +1,15 @@
-// The Signal: the opening story, drawn with Three.js.
-//   0 Cosmos – scattered stars, with the tree of life growing from seed to now (space, nature)
+// The opening story, drawn with Three.js: life and technology, grown together.
+//   0 Seed    – rising motes of light, and the tree of life growing from seed to now
 //   1 Mind   – a connectome: neurons shaped like a brain, firing thoughts; it breathes 4s in / 4s out (psychology, mental health)
 //   2 Growth – a tree of life that grows with the career as you scroll, leaves glowing as they open (life as a force of nature)
-//   3 Reply  – the stars fold into one beam aimed at the visitor
+//   3 Connect – the motes gather into one beam reaching toward the visitor
 // Framework-free: pass in THREE so the site (npm) and demos (CDN) share this file.
 
 import { createConnectome } from './scenes/connectome.js';
 import { createTree } from './scenes/tree.js';
 
-export const ACTS = ['Cosmos', 'Mind', 'Growth', 'Reply'];
-const COLORS = [0x8fd3ff, 0xb7a8ff, 0x9fe3a8, 0xffc46b];
+export const ACTS = ['Seed', 'Mind', 'Growth', 'Connect'];
+const COLORS = [0x7fe0c8, 0xb7a8ff, 0x9fe3a8, 0xffc46b];
 
 const rand = (a, b) => a + Math.random() * (b - a);
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
@@ -21,17 +21,17 @@ export function breath(seconds) {
 }
 
 function buildShapes(N) {
-  const cosmos = new Float32Array(N * 3);
-  const drift = new Float32Array(N * 3); // Mind and Growth: stars pull back so the scenes stand out
+  const seedField = new Float32Array(N * 3);
+  const drift = new Float32Array(N * 3); // Mind and Growth: motes pull back so the scenes stand out
   const reply = new Float32Array(N * 3);
   for (let i = 0; i < N; i++) {
     const j = i * 3;
-    cosmos[j] = rand(-80, 80); cosmos[j + 1] = rand(-50, 50); cosmos[j + 2] = rand(-60, 0);
-    drift[j] = cosmos[j] * 1.3; drift[j + 1] = cosmos[j + 1] * 1.3; drift[j + 2] = cosmos[j + 2] - 40;
+    seedField[j] = rand(-80, 80); seedField[j + 1] = rand(-50, 50); seedField[j + 2] = rand(-60, 0);
+    drift[j] = seedField[j] * 1.3; drift[j + 1] = seedField[j + 1] * 1.3; drift[j + 2] = seedField[j + 2] - 40;
     const t = Math.random(), br = Math.pow(Math.random(), 3) * 1.4 * (1 - t * 0.6), ba = Math.random() * Math.PI * 2;
     reply[j] = Math.cos(ba) * br; reply[j + 1] = Math.sin(ba) * br; reply[j + 2] = -80 + t * 120;
   }
-  return [cosmos, drift, drift, reply];
+  return [seedField, drift, drift, reply];
 }
 
 function glowTexture(THREE) {
@@ -112,19 +112,22 @@ export function createStory(o) {
     lastMs = ms;
     const near = (k) => Math.max(0, 1 - Math.abs(current - k));
 
-    // Story particles: stars that pull back for Mind and Growth, then fold into the reply beam.
+    // Story particles: motes of light that rise slowly like pollen (or data), pull back for
+    // Mind and Growth, then gather into the beam.
     const b = breath(time);
     const wob = still ? 0 : 0.2 + Math.sin(f * Math.PI) * 2.2;
+    const rise = still ? 0 : 1 - Math.min(1, Math.max(0, current - 2));
     for (let k = 0; k < N; k++) {
       const j = k * 3, s = seed[k];
       pos[j] = A[j] + (B[j] - A[j]) * f + Math.sin(time * 1.3 + s) * wob * 0.35;
-      pos[j + 1] = A[j + 1] + (B[j + 1] - A[j + 1]) * f + Math.cos(time * 1.1 + s * 1.7) * wob * 0.35;
+      pos[j + 1] = A[j + 1] + (B[j + 1] - A[j + 1]) * f + Math.cos(time * 1.1 + s * 1.7) * wob * 0.35
+        + (((time * 1.1 + s * 7) % 24) - 12) * rise;
       pos[j + 2] = A[j + 2] + (B[j + 2] - A[j + 2]) * f;
     }
     geo.attributes.position.needsUpdate = true;
     mat.color.copy(palette[i]).lerp(palette[i + 1], f);
     const scenes = Math.max(near(1), near(2));
-    mat.opacity = (0.45 + 0.45 * Math.min(1, current)) * (1 - 0.6 * scenes);
+    mat.opacity = (0.25 + 0.65 * Math.min(1, current)) * (1 - 0.6 * scenes);
     mat.size = 0.5 + Math.max(0, current - 2.2) * 0.4;
 
     // Mind: the connectome turns slowly and breathes with the 8-second cycle.

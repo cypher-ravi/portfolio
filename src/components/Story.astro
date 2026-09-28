@@ -10,10 +10,10 @@ import { profile, story } from '../data/profile';
     <div class="frame" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
     <div class="hud-top" aria-hidden="true">
       <span>Local time · India <b id="clock">--:--</b> IST</span>
-      <span class="cue" id="cue">Scroll to decode <span>↓</span></span>
+      <span class="cue" id="cue">Scroll to grow <span>↓</span></span>
     </div>
     <div class="hud" aria-hidden="true">
-      <span id="story-act">Act 1 · Cosmos</span>
+      <span id="story-act">Act 1 · Seed</span>
       <span class="track" id="story-track"><i id="story-progress"></i></span>
       <span id="story-breath"></span>
     </div>
@@ -22,7 +22,7 @@ import { profile, story } from '../data/profile';
   <div class="acts">
     <article class="act first">
       <div class="cap">
-        <p class="label tone-0">● Signal acquired · 1420.405 MHz</p>
+        <p class="label tone-0">● Life × Tech</p>
         <h1>{profile.headline[0]} <em>{profile.headline[1]}</em></h1>
         <p class="sub">{profile.name} · {profile.intro}</p>
         <div class="ctas">
@@ -118,7 +118,7 @@ import { profile, story } from '../data/profile';
 
 <script>
   // Keep in sync with ACTS in story-engine.js (not imported, so the engine stays lazy-loaded).
-  const ACTS = ['Cosmos', 'Mind', 'Growth', 'Reply'];
+  const ACTS = ['Seed', 'Mind', 'Growth', 'Connect'];
 
   const root = document.getElementById('story')!;
   const canvas = document.getElementById('story-gl') as HTMLCanvasElement;

@@ -1,6 +1,6 @@
 # Portfolio
 
-Ravi's personal site. Theme: **First Contact**. The page opens with *The Signal*, a four-act Three.js scroll story (Cosmos, Mind, Growth, Reply). The hero shows a tree of life growing from seed to now. Mind is a connectome (neurons firing; tap to start a thought) and Growth is a tree of life that grows with scroll from 2020 to now, its leaves glowing as they open. The engine is `src/scripts/story-engine.js`, with the scenes in `src/scripts/scenes/`. Type: Orbitron for headings, Space Grotesk for text, Space Mono for labels, all self-hosted (SIL Open Font License).
+Ravi's personal site. Theme: **Life × Tech**, living things drawn in light and code. The page opens with a four-act Three.js scroll story (Seed, Mind, Growth, Connect): a tree of life grows from seed to now in the hero, Mind is a connectome (neurons firing; tap to start a thought), Growth regrows the tree with scroll from 2020 to now, and Connect gathers everything into one beam. A page-long tree (`src/components/PageTree.astro`) runs down the page with a branch into each section and data rising through it like sap. The engine is `src/scripts/story-engine.js`, with the scenes in `src/scripts/scenes/`. Type: Space Grotesk (bold for headings, regular for text), Space Mono for labels, all self-hosted (SIL Open Font License).
 
 ## Develop
 
