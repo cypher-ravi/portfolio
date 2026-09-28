@@ -1,6 +1,6 @@
 # Portfolio
 
-Ravi's personal site. Theme: **First Contact**. The page opens with *The Signal*, a four-act Three.js scroll story (Cosmos, Mind, Growth, Reply). The hero shows the three-body problem: three suns on the stable figure-eight orbit, simulated live. The engine is `src/scripts/story-engine.js`. Type: Orbitron for headings, Space Grotesk for text, Space Mono for labels, all self-hosted (SIL Open Font License).
+Ravi's personal site. Theme: **First Contact**. The page opens with *The Signal*, a four-act Three.js scroll story (Cosmos, Mind, Growth, Reply). The hero shows the three-body problem: three suns on the stable figure-eight orbit, simulated live. Mind is a connectome (neurons firing; tap to start a thought) and Growth is a tree of life that grows with scroll from 2020 to now, its leaves glowing as they open. The engine is `src/scripts/story-engine.js`, with the scenes in `src/scripts/scenes/`. Type: Orbitron for headings, Space Grotesk for text, Space Mono for labels, all self-hosted (SIL Open Font License).
 
 ## Develop
 
