@@ -1,0 +1,218 @@
+---
+// The page tree: one tree that runs the whole page. Its crown grows out of the
+// opening story, the trunk runs down the left gutter with a branch into each
+// section, and the roots spread under the contact section. It grows as you scroll.
+// Pure SVG, laid out from the real section positions; decoration only.
+---
+<svg id="page-tree" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="pt-bark" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9fe3a8" />
+      <stop offset="0.5" stop-color="#4f7d8f" />
+      <stop offset="1" stop-color="#3b4f6e" />
+    </linearGradient>
+    <radialGradient id="pt-halo">
+      <stop offset="0" stop-color="#9fe3a8" stop-opacity="0.55" />
+      <stop offset="1" stop-color="#9fe3a8" stop-opacity="0" />
+    </radialGradient>
+    <path id="pt-leaf" d="M0 0C4-5.5 11-6 16 0 11 6 4 5.5 0 0Z" />
+  </defs>
+  <g id="pt-roots"></g>
+  <path id="pt-trunk-glow" />
+  <path id="pt-trunk" />
+  <g id="pt-branches"></g>
+  <circle id="pt-tip" r="3.5" />
+</svg>
+
+<style>
+  #page-tree {
+    position: absolute; left: 0; top: 0; width: 100%; height: 0;
+    z-index: 0; pointer-events: none; overflow: visible;
+  }
+  #pt-trunk, :global(#page-tree .branch), :global(#page-tree .root) {
+    fill: none; stroke: url(#pt-bark); stroke-linecap: round;
+  }
+  #pt-trunk { stroke-width: 2.2; }
+  #pt-trunk-glow { fill: none; stroke: var(--growth); stroke-width: 9; stroke-opacity: 0.07; stroke-linecap: round; }
+  #pt-tip { fill: var(--growth); filter: drop-shadow(0 0 6px var(--growth)); transition: opacity 0.3s; }
+  :global(#page-tree .branch) { stroke-width: 1.5; }
+  :global(#page-tree .twig) { stroke-width: 1; }
+  :global(#page-tree .root) { stroke: #3b4f6e; stroke-width: 1.3; }
+  :global(#page-tree .root.fine) { stroke-width: 0.8; stroke-opacity: 0.7; }
+
+  /* Leaves open with a flash, then keep breathing a soft glow. */
+  :global(#page-tree .leaf) {
+    opacity: 0; transform: scale(0.2); transform-box: fill-box; transform-origin: 0 50%;
+    transition: opacity 0.6s ease var(--d, 0ms), transform 0.7s cubic-bezier(.2,1.4,.4,1) var(--d, 0ms);
+  }
+  :global(#page-tree .leaf use) { fill: var(--growth); fill-opacity: 0.85; }
+  :global(#page-tree .leaf.gold use) { fill: #ffd27a; }
+  :global(#page-tree .on .leaf), :global(#page-tree .leaf.on) { opacity: 1; transform: scale(1); }
+  :global(#page-tree .halo) {
+    fill: url(#pt-halo); opacity: 0; transition: opacity 0.8s ease 0.2s;
+  }
+  :global(#page-tree .on .halo) { opacity: 1; animation: pt-breathe 6s ease-in-out infinite; }
+  @keyframes pt-breathe { 50% { opacity: 0.45; } }
+  @media (prefers-reduced-motion: reduce) {
+    :global(#page-tree .leaf), :global(#page-tree .halo) { transition: none; }
+    :global(#page-tree .on .halo) { animation: none; }
+  }
+</style>
+
+<script>
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.getElementById('page-tree') as unknown as SVGSVGElement;
+  const trunk = document.getElementById('pt-trunk') as unknown as SVGPathElement;
+  const trunkGlow = document.getElementById('pt-trunk-glow') as unknown as SVGPathElement;
+  const branchesG = document.getElementById('pt-branches')!;
+  const rootsG = document.getElementById('pt-roots')!;
+  const tip = document.getElementById('pt-tip') as unknown as SVGCircleElement;
+  const bark = svg.querySelector('#pt-bark') as SVGLinearGradientElement;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Seeded so the tree has the same shape on every visit.
+  let seed = 11;
+  const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+  const el = <K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<string, string | number>, parent: Element) => {
+    const n = document.createElementNS(NS, tag);
+    for (const k in attrs) n.setAttribute(k, String(attrs[k]));
+    parent.appendChild(n);
+    return n;
+  };
+  const docY = (e: Element) => e.getBoundingClientRect().top + scrollY;
+  const docX = (e: Element) => e.getBoundingClientRect().left + scrollX;
+
+  type Grown = { y: number; node: SVGElement };
+  let grown: Grown[] = [];
+  let trunkLen = 0, top = 0, bottom = 0, rootTop = 0;
+
+  // A leaf cluster: a soft halo plus a few leaf shapes fanned around a point.
+  function cluster(parent: Element, x: number, y: number, n: number, dir: number, size = 1) {
+    el('circle', { class: 'halo', cx: x, cy: y, r: 22 * size }, parent);
+    for (let i = 0; i < n; i++) {
+      const a = dir + (i - (n - 1) / 2) * 38 + (rnd() - 0.5) * 16;
+      const s = (0.7 + rnd() * 0.5) * size;
+      const g = el('g', { class: `leaf${rnd() < 0.25 ? ' gold' : ''}`, style: `--d:${120 + i * 90}ms` }, parent);
+      el('use', { href: '#pt-leaf', transform: `translate(${x} ${y}) rotate(${a}) scale(${s})` }, g);
+    }
+  }
+
+  function build() {
+    branchesG.replaceChildren(); rootsG.replaceChildren(); grown = []; seed = 11;
+    const main = document.getElementById('main');
+    const foot = document.querySelector('.foot');
+    if (!main || !foot) return;
+    const vw = document.documentElement.clientWidth;
+    const narrow = vw < 1100;
+    const wrapLeft = Math.max(20, (vw - 1040) / 2);
+    const x0 = narrow ? 9 : wrapLeft - 52;
+    top = docY(main) + (narrow ? 30 : 60);
+    rootTop = docY(foot) + 70;
+    bottom = rootTop + 150;
+    svg.style.height = `${bottom + 10}px`;
+    bark.setAttribute('y1', String(top)); bark.setAttribute('y2', String(bottom));
+
+    // Trunk: a gentle S down the gutter.
+    const amp = narrow ? 3 : 12, step = 260;
+    let d = `M${x0} ${top}`;
+    for (let y = top, k = 0; y < rootTop; y += step, k++) {
+      const y2 = Math.min(rootTop, y + step), s = k % 2 ? 1 : -1;
+      d += ` C${x0 + s * amp} ${y + step * 0.35} ${x0 - s * amp} ${y + step * 0.65} ${x0} ${y2}`;
+    }
+    trunk.setAttribute('d', d); trunkGlow.setAttribute('d', d);
+    trunkLen = trunk.getTotalLength();
+    trunk.style.strokeDasharray = trunkGlow.style.strokeDasharray = `${trunkLen}`;
+
+    // Crown: branches fanning up out of the story, with leaves.
+    const crown = el('g', {}, branchesG);
+    const arms = narrow ? 2 : 5;
+    for (let i = 0; i < arms; i++) {
+      const side = narrow ? 1 : i % 2 ? 1 : -1;
+      const reach = narrow ? 18 + i * 14 : 30 + rnd() * 40;
+      const ex = x0 + side * reach, ey = top - 12 - rnd() * (narrow ? 20 : 44);
+      el('path', { class: 'branch', d: `M${x0} ${top + 24 + i * 10} Q${x0 + side * reach * 0.2} ${ey + 20} ${ex} ${ey}` }, crown);
+      cluster(crown, ex, ey, narrow ? 2 : 3, side > 0 ? -60 : -120, narrow ? 0.8 : 1);
+    }
+    grown.push({ y: top, node: crown });
+
+    // A branch into each section, ending in a leaf cluster beside its label.
+    const targets = ['#glance', '#experience .head .label', '#projects .head .label', '#ai .head .label', '#contact .head .label'];
+    for (const sel of targets) {
+      const t = document.querySelector(sel);
+      if (!t) continue;
+      const ty = docY(t) + (sel === '#glance' ? 26 : 8);
+      const tx = docX(t) - 16;
+      const g = el('g', {}, branchesG);
+      const from = ty + 70;
+      el('path', { class: 'branch', d: `M${x0} ${from} C${x0 + (tx - x0) * 0.2} ${from - 10} ${x0 + (tx - x0) * 0.55} ${ty + 4} ${tx} ${ty}` }, g);
+      cluster(g, tx, ty, narrow ? 2 : 3, -115, narrow ? 0.75 : 1); // leaves point up and back, away from the text
+      grown.push({ y: from, node: g });
+    }
+
+    // Twigs: short shoots into the gutter between sections (desktop only).
+    if (!narrow) {
+      for (let y = top + 220; y < rootTop - 120; y += 170 + rnd() * 90) {
+        const g = el('g', {}, branchesG);
+        const len = 22 + rnd() * 26, side = -1;
+        const ex = x0 + side * len, ey = y - 18 - rnd() * 20;
+        el('path', { class: 'branch twig', d: `M${x0} ${y} Q${x0 + side * len * 0.3} ${ey + 4} ${ex} ${ey}` }, g);
+        cluster(g, ex, ey, 2, 200 + rnd() * 30, 0.7);
+        grown.push({ y, node: g });
+      }
+    }
+
+    // Roots: spreading under the footer, a few thick and many fine.
+    const roots = el('g', {}, rootsG);
+    const span = Math.min(vw * 0.9, 900);
+    for (let i = 0; i < 14; i++) {
+      const fine = i >= 6;
+      const side = i % 2 ? 1 : -1;
+      const reach = (fine ? 0.2 + rnd() * 0.6 : 0.35 + rnd() * 0.65) * span * (narrow ? 0.9 : 0.6);
+      const ex = Math.min(vw - 8, Math.max(4, x0 + (narrow || side > 0 ? reach : -Math.min(reach, x0 - 4)))), ey = rootTop + 40 + rnd() * 100;
+      el('path', {
+        class: `root${fine ? ' fine' : ''}`,
+        d: `M${x0} ${rootTop} C${x0} ${rootTop + 30 + rnd() * 20} ${x0 + (ex - x0) * 0.4} ${ey - 30} ${ex} ${ey}`,
+      }, roots);
+    }
+    grown.push({ y: rootTop, node: roots });
+
+    for (const p of svg.querySelectorAll<SVGPathElement>('.branch, .root')) {
+      const L = p.getTotalLength();
+      p.style.strokeDasharray = `${L}`;
+      p.style.strokeDashoffset = reduced ? '0' : `${L}`;
+      p.style.transition = reduced ? 'none' : 'stroke-dashoffset 1.1s cubic-bezier(.3,.6,.2,1)';
+    }
+    update();
+  }
+
+  // Growth follows the reader: the trunk reaches 70% down the viewport.
+  function update() {
+    if (!trunkLen) return;
+    const atEnd = scrollY + innerHeight >= document.documentElement.scrollHeight - 40;
+    const reach = reduced || atEnd ? bottom : scrollY + innerHeight * 0.7;
+    const f = Math.min(1, Math.max(0, (reach - top) / (rootTop - top)));
+    const off = trunkLen * (1 - f);
+    trunk.style.strokeDashoffset = trunkGlow.style.strokeDashoffset = `${off}`;
+    const pt = trunk.getPointAtLength(trunkLen * f);
+    tip.setAttribute('cx', String(pt.x)); tip.setAttribute('cy', String(pt.y));
+    tip.style.opacity = f > 0 && f < 1 ? '1' : '0';
+    for (const g of grown) {
+      const on = reach >= g.y;
+      if (on === g.node.classList.contains('on')) continue;
+      g.node.classList.toggle('on', on);
+      for (const p of g.node.querySelectorAll<SVGPathElement>('.branch, .root')) {
+        p.style.strokeDashoffset = on ? '0' : p.style.strokeDasharray;
+      }
+    }
+  }
+
+  // Lay out once everything (fonts, pinned sections) has settled, and again on resize.
+  let raf = 0;
+  const relayout = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(build); };
+  addEventListener('load', relayout);
+  addEventListener('resize', relayout);
+  document.fonts?.ready.then(relayout);
+  new ResizeObserver(relayout).observe(document.body);
+  addEventListener('scroll', () => requestAnimationFrame(update), { passive: true });
+  relayout();
+</script>
