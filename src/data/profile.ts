@@ -46,9 +46,39 @@ export const work: Work[] = [
 export type Experiment = { name: string; blurb: string; status: 'planned' | 'building' | 'live' };
 
 export const lab: Experiment[] = [
+  { name: 'Overhead', blurb: 'Space tech. Which satellites are above you right now, with plain-language questions answered by tool calls.', status: 'planned' },
+  { name: 'Vitals Brief', blurb: 'Healthcare. A plain-language weekly summary of your wearable data, parsed in the browser. It never diagnoses.', status: 'planned' },
+  { name: 'Breathing Room', blurb: 'Mental health. A calm daily check-in with a one-minute breathing exercise. Entries stay on your device.', status: 'planned' },
+  { name: 'Eval Gate', blurb: 'A GitHub Action that fails a pull request when AI quality or safety drops. It guards the other projects.', status: 'planned' },
   { name: 'Ask Ravi', blurb: 'A grounded assistant that answers questions about my work, with a source for every answer.', status: 'planned' },
-  { name: 'Eval Gate', blurb: 'A GitHub Action that fails a pull request when prompt quality drops or cost jumps.', status: 'planned' },
-  { name: 'Overhead', blurb: 'What satellites are above you right now, with plain-language questions answered by tool calls.', status: 'planned' },
+];
+
+// Acts 2-5 of the opening story. Act 1 is the hero. Each act links to the full section below.
+export const story = [
+  {
+    act: 'Pulse', motivation: 'healthcare',
+    title: 'Out of the silence, a heartbeat',
+    body: 'Technology matters most when it keeps someone alive and well. I build systems people can rely on.',
+    href: '#glance', link: 'At a glance',
+  },
+  {
+    act: 'Mind', motivation: 'psychology',
+    title: 'Calm systems people can trust',
+    body: 'I care how software makes people feel. My AI work is careful: measured, explainable, and honest about its limits.',
+    href: '#protocol', link: 'How I use AI',
+  },
+  {
+    act: 'Growth', motivation: 'nature',
+    title: 'Life finds a way to grow',
+    body: 'Seeds spiral out at the golden angle, 137.5°. Each bloom is a project: space, health, mind, and the tools that keep them safe.',
+    href: '#lab', link: 'The projects',
+  },
+  {
+    act: 'Reply', motivation: 'connection',
+    title: 'Send a signal back',
+    body: 'Hiring for a senior engineer who knows AI? I reply within a day.',
+    href: '#reply', link: 'Contact',
+  },
 ];
 
 export const aiNotes = [

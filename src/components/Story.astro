@@ -1,0 +1,143 @@
+---
+// The opening story: five acts over a sticky Three.js canvas.
+// All text is plain HTML in the acts; the canvas is decoration only.
+import { profile, story } from '../data/profile';
+---
+<section class="story" id="story" aria-label="Introduction">
+  <div class="stage">
+    <canvas id="story-gl" aria-hidden="true"></canvas>
+    <div class="still" aria-hidden="true"></div>
+    <div class="hud" aria-hidden="true">
+      <span id="story-act">Act 1 · Cosmos</span>
+      <span class="track" id="story-track"><i id="story-progress"></i></span>
+      <span id="story-breath"></span>
+    </div>
+  </div>
+
+  <div class="acts">
+    <article class="act first">
+      <div class="cap">
+        <p class="label tone-0">● Signal acquired · 1420.405 MHz · hydrogen line</p>
+        <h1>{profile.headline}</h1>
+        <p class="sub">{profile.name} · {profile.role} · {profile.location}</p>
+        <div class="ctas">
+          <a class="btn primary" href={profile.links.resume}>Resume</a>
+          <a class="btn" href={`mailto:${profile.email}`}>Email</a>
+          <a class="btn" href="#glance">Skip the story ↓</a>
+        </div>
+      </div>
+    </article>
+    {story.map((a, i) => (
+      <article class="act">
+        <div class="cap">
+          <p class={`label tone-${i + 1}`}>Act {i + 2} · {a.act} · {a.motivation}</p>
+          <h2>{a.title}</h2>
+          <p>{a.body}</p>
+          <a href={a.href}>{a.link} ↓</a>
+        </div>
+      </article>
+    ))}
+  </div>
+</section>
+
+<style>
+  .story { position: relative; margin-inline: -20px; }
+  .block, :global(.block) { scroll-margin-top: 64px; }
+  .stage { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; }
+  #story-gl { display: block; width: 100%; height: 100%; }
+  .still { display: none; position: absolute; inset: 0; background: radial-gradient(circle at 50% 45%, #1a2c3a 0, var(--void) 60%); }
+  .story.no-gl #story-gl { display: none; }
+  .story.no-gl .still { display: block; }
+
+  .hud {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    font: 500 0.7rem var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+    pointer-events: none;
+  }
+  .track { flex: 1; max-width: 260px; height: 2px; background: var(--line); position: relative; color: var(--signal); }
+  .track i { position: absolute; inset: 0 auto 0 0; width: 0; background: currentColor; }
+  #story-breath { color: var(--mind); min-width: 9em; text-align: right; }
+
+  .acts { position: relative; margin-top: -100vh; margin-top: -100svh; pointer-events: none; }
+  .act { min-height: 100vh; min-height: 100svh; display: flex; align-items: flex-end; padding-inline: 20px; padding-block: 0 16vh; }
+  .cap {
+    max-width: 440px; display: grid; gap: 10px; pointer-events: auto;
+    background: color-mix(in srgb, var(--void) 72%, transparent);
+    border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; backdrop-filter: blur(6px);
+  }
+  .cap h2 { font-size: clamp(1.2rem, 3vw, 1.6rem); font-weight: 600; }
+  .cap p { color: var(--muted); font-size: 0.97rem; }
+  .cap a { font: 500 0.85rem var(--mono); }
+  .act.first { align-items: center; padding-block: 0; }
+  .act.first .cap { max-width: 640px; background: none; border: 0; backdrop-filter: none; padding: 0; gap: 20px; }
+  h1 { font-size: clamp(1.9rem, 5vw, 3.3rem); font-weight: 600; letter-spacing: -0.015em; }
+  .sub { font-family: var(--mono); font-size: 0.9rem; }
+  .ctas { display: flex; flex-wrap: wrap; gap: 12px; }
+  .btn {
+    font: 500 0.9rem var(--mono); padding: 11px 18px; border: 1px solid var(--signal-dim); border-radius: 6px;
+    color: var(--text); text-decoration: none; background: color-mix(in srgb, var(--void) 60%, transparent);
+  }
+  .btn:hover { border-color: var(--signal); }
+  .btn.primary { background: var(--signal); border-color: var(--signal); color: var(--void); }
+
+  .cap .label { font-size: 0.72rem; }
+  .cap .tone-0 { color: var(--signal); } .cap .tone-1 { color: var(--pulse); } .cap .tone-2 { color: var(--mind); }
+  .cap .tone-3 { color: var(--growth); } .cap .tone-4 { color: var(--flare); }
+
+  @media (min-width: 760px) {
+    .act { padding-inline: max(20px, calc((100vw - 1040px) / 2)); }
+    .act:nth-child(even) { justify-content: flex-end; }
+  }
+</style>
+
+<script>
+  import { ACTS } from '../scripts/story-engine.js';
+
+  const root = document.getElementById('story')!;
+  const canvas = document.getElementById('story-gl') as HTMLCanvasElement;
+  const bar = document.getElementById('story-progress')!;
+  const track = document.getElementById('story-track')!;
+  const actEl = document.getElementById('story-act')!;
+  const breathEl = document.getElementById('story-breath')!;
+  const TONES = ['var(--signal)', 'var(--pulse)', 'var(--mind)', 'var(--growth)', 'var(--flare)'];
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let progress = 0;
+  const readScroll = () => {
+    const r = root.getBoundingClientRect();
+    const total = root.offsetHeight - innerHeight;
+    progress = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 0;
+    bar.style.width = `${(progress * 100).toFixed(1)}%`;
+  };
+  readScroll();
+  addEventListener('scroll', readScroll, { passive: true });
+
+  const hasWebGL = (() => {
+    try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; }
+  })();
+
+  // Load Three.js after first paint so the text is readable immediately.
+  async function boot() {
+    if (!hasWebGL) { root.classList.add('no-gl'); return; }
+    const [THREE, { createStory }] = await Promise.all([import('../scripts/three-lite'), import('../scripts/story-engine.js')]);
+    const s = createStory({
+      THREE, canvas, word: 'RAVI', reducedMotion,
+      getProgress: () => progress,
+      onFrame: ({ act, breath }) => {
+        actEl.textContent = `Act ${act + 1} · ${ACTS[act]}`;
+        track.style.color = TONES[act];
+        breathEl.textContent = breath;
+      },
+    });
+    new IntersectionObserver((es) => s.setVisible(es[0].isIntersecting)).observe(root);
+    addEventListener('resize', () => s.resize());
+    if (reducedMotion) {
+      addEventListener('scroll', () => s.draw(), { passive: true });
+      s.draw();
+    } else s.start();
+  }
+  if ('requestIdleCallback' in window) requestIdleCallback(() => boot(), { timeout: 1200 });
+  else setTimeout(boot, 200);
+</script>

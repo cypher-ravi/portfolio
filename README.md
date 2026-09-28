@@ -1,6 +1,6 @@
 # Portfolio
 
-Ravi's personal site. Theme: **First Contact**, the page as a transmission being decoded on the hydrogen line (1420.405 MHz).
+Ravi's personal site. Theme: **First Contact**. The page opens with *The Signal*, a five-act Three.js scroll story (Cosmos, Pulse, Mind, Growth, Reply) built from what drives the work: space tech, healthcare, the mind, and life as a force of nature. The engine is `src/scripts/story-engine.js`.
 
 ## Develop
 
