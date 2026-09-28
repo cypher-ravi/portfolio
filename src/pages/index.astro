@@ -291,7 +291,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
     border-bottom: 1px solid var(--line);
   }
   .bar-inner { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-block: 12px; }
-  .mark { font: 700 1.15rem var(--display); letter-spacing: 0.08em; color: var(--text); text-decoration: none; }
+  .mark { font: 700 1.15rem var(--display); letter-spacing: -0.01em; color: var(--text); text-decoration: none; }
   nav { display: flex; align-items: center; gap: 22px; font: 500 0.9rem var(--body); }
   nav a { color: var(--muted); text-decoration: none; transition: color 0.2s; position: relative; }
   nav a:hover, nav a[aria-current] { color: var(--text); }
@@ -339,7 +339,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
   }
   .pin-count b { color: var(--signal); font-weight: 500; }
   .pin-period { font: 500 0.85rem var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
-  .pin-company { font: 600 clamp(1.4rem, 2.2vw, 1.8rem)/1.2 var(--display); min-height: 2.2em; }
+  .pin-company { font: 700 clamp(1.4rem, 2.2vw, 1.8rem)/1.2 var(--display); min-height: 2.2em; }
   .pin-rings { position: relative; width: 120px; aspect-ratio: 1; margin-top: 8px; }
   .pin-rings i {
     position: absolute; inset: calc(var(--k) * 14px); border-radius: 50%;
@@ -399,7 +399,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
     transition: border-color 0.3s, transform 0.3s;
   }
   .card:hover { border-color: color-mix(in srgb, var(--tone) 55%, transparent); transform: translateY(-3px); }
-  .card h3 { font: 600 1.35rem/1.2 var(--display); margin-top: auto; }
+  .card h3 { font: 700 1.35rem/1.2 var(--display); margin-top: auto; }
   .card p { color: var(--muted); font-size: 0.97rem; }
   .kind-lab { background: transparent; border-style: dashed; }
   .theme-health { --tone: #ff9d7a; } .theme-mind { --tone: var(--mind); } .theme-ai { --tone: var(--growth); }
@@ -430,7 +430,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .detail[open] { animation: pop 0.25s ease-out; }
   @keyframes pop { from { opacity: 0; transform: translateY(12px) scale(0.98); } }
   .detail-in { display: grid; gap: 16px; padding: 26px; }
-  .detail h3 { font: 600 1.8rem/1.15 var(--display); }
+  .detail h3 { font: 700 1.8rem/1.15 var(--display); }
   .detail .tldr { font-size: 1.08rem; }
   .close {
     width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; line-height: 1;
