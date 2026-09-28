@@ -7,6 +7,7 @@ export {
   Color,
   Group,
   Line,
+  LineSegments,
   LineBasicMaterial,
   PerspectiveCamera,
   Points,

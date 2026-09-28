@@ -1,14 +1,16 @@
 // The Signal: the opening story, drawn with Three.js.
 //   0 Cosmos – a three-body system in a figure-eight orbit, among scattered stars (space tech)
-//   1 Mind   – the stars form the name and breathe on a 4s-in / 4s-out cycle (psychology, mental health)
-//   2 Growth – a sunflower spiral with four projects in bloom (life as a force of nature)
-//   3 Reply  – everything folds into one beam aimed at the visitor
+//   1 Mind   – a connectome: neurons shaped like a brain, firing thoughts; it breathes 4s in / 4s out (psychology, mental health)
+//   2 Growth – a tree of life that grows with the career as you scroll, leaves glowing as they open (life as a force of nature)
+//   3 Reply  – the stars fold into one beam aimed at the visitor
 // Framework-free: pass in THREE so the site (npm) and demos (CDN) share this file.
+
+import { createConnectome } from './scenes/connectome.js';
+import { createTree } from './scenes/tree.js';
 
 export const ACTS = ['Cosmos', 'Mind', 'Growth', 'Reply'];
 const COLORS = [0x8fd3ff, 0xb7a8ff, 0x9fe3a8, 0xffc46b];
 const BODY_COLORS = [0xffc46b, 0x8fd3ff, 0xff9d7a];
-const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5)); // ≈137.5°, how sunflowers pack seeds
 
 const rand = (a, b) => a + Math.random() * (b - a);
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
@@ -54,50 +56,18 @@ export function createThreeBody() {
   };
 }
 
-function buildShapes(N, word) {
+function buildShapes(N) {
   const cosmos = new Float32Array(N * 3);
-  const name = new Float32Array(N * 3);
-  const growth = new Float32Array(N * 3);
+  const drift = new Float32Array(N * 3); // Mind and Growth: stars pull back so the scenes stand out
   const reply = new Float32Array(N * 3);
-
   for (let i = 0; i < N; i++) {
     const j = i * 3;
     cosmos[j] = rand(-80, 80); cosmos[j + 1] = rand(-50, 50); cosmos[j + 2] = rand(-60, 0);
+    drift[j] = cosmos[j] * 1.3; drift[j + 1] = cosmos[j + 1] * 1.3; drift[j + 2] = cosmos[j + 2] - 40;
     const t = Math.random(), br = Math.pow(Math.random(), 3) * 1.4 * (1 - t * 0.6), ba = Math.random() * Math.PI * 2;
     reply[j] = Math.cos(ba) * br; reply[j + 1] = Math.sin(ba) * br; reply[j + 2] = -80 + t * 120;
   }
-
-  // Name: sample lit pixels from 2D text.
-  const c = document.createElement('canvas'), W = 600, H = 180;
-  c.width = W; c.height = H;
-  const g = c.getContext('2d');
-  g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.font = '800 150px "Segoe UI", Arial, sans-serif';
-  g.fillText(word, W / 2, H / 2);
-  const d = g.getImageData(0, 0, W, H).data, pts = [];
-  for (let y = 0; y < H; y += 2) for (let x = 0; x < W; x += 2) if (d[(y * W + x) * 4 + 3] > 128) pts.push([x, y]);
-  for (let i = 0; i < N; i++) {
-    const q = pts[(Math.random() * pts.length) | 0] || [W / 2, H / 2];
-    name[i * 3] = (q[0] - W / 2) * 0.085 + rand(-0.15, 0.15);
-    name[i * 3 + 1] = -(q[1] - H / 2) * 0.085 + 8 + rand(-0.15, 0.15);
-    name[i * 3 + 2] = rand(-0.8, 0.8);
-  }
-
-  // Growth: a phyllotaxis disc, with four denser blooms for the projects.
-  const spiralCount = Math.floor(N * 0.78);
-  for (let k = 0; k < spiralCount; k++) {
-    const r = 0.62 * Math.sqrt(k * (1400 / spiralCount)), ang = k * GOLDEN_ANGLE;
-    growth[k * 3] = Math.cos(ang) * r; growth[k * 3 + 1] = Math.sin(ang) * r * 0.9 + 4; growth[k * 3 + 2] = -r * 0.25;
-  }
-  const blooms = [0, 1, 2, 3].map((b) => [Math.cos(b * Math.PI / 2 + 0.6) * 15, Math.sin(b * Math.PI / 2 + 0.6) * 13.5 + 4, 3]);
-  for (let k = spiralCount; k < N; k++) {
-    const bl = blooms[k % 4], r = Math.pow(Math.random(), 2) * 3, th = Math.random() * Math.PI * 2, ph = Math.acos(rand(-1, 1));
-    growth[k * 3] = bl[0] + r * Math.sin(ph) * Math.cos(th);
-    growth[k * 3 + 1] = bl[1] + r * Math.sin(ph) * Math.sin(th);
-    growth[k * 3 + 2] = bl[2] + r * Math.cos(ph);
-  }
-
-  return [cosmos, name, growth, reply];
+  return [cosmos, drift, drift, reply];
 }
 
 function glowTexture(THREE) {
@@ -110,8 +80,8 @@ function glowTexture(THREE) {
 }
 
 /**
- * @param {{ THREE: any, canvas: HTMLCanvasElement, word: string, reducedMotion: boolean,
- *           getProgress: () => number, onFrame?: (info: { act: number, breath: string }) => void }} o
+ * @param {{ THREE: any, canvas: HTMLCanvasElement, reducedMotion: boolean,
+ *           getProgress: () => number, onFrame?: (info: { act: number, note: string }) => void }} o
  */
 export function createStory(o) {
   const { THREE, canvas } = o;
@@ -123,8 +93,9 @@ export function createStory(o) {
   const glow = glowTexture(THREE);
 
   // Story particles.
-  const N = window.innerWidth < 700 ? 3000 : 6000;
-  const shapes = buildShapes(N, o.word);
+  const small = window.innerWidth < 700;
+  const N = small ? 2500 : 5000;
+  const shapes = buildShapes(N);
   const pos = new Float32Array(shapes[0]);
   const seed = new Float32Array(N).map(() => Math.random() * 1000);
   const geo = new THREE.BufferGeometry();
@@ -171,7 +142,14 @@ export function createStory(o) {
   // Pre-roll so the trails are full on the first frame, which is also the reduced-motion still.
   for (let k = 0; k < TRAIL; k++) { for (let s = 0; s < 3; s++) sim.step(0.0015); pushTrail(); }
 
-  let current = 0, running = false, visible = true;
+  // Mind: the connectome. Growth: the tree of life. Both lighter on phones.
+  const brain = createConnectome(THREE, glow, { count: small ? 600 : 900 });
+  const tree = createTree(THREE, glow, { depth: small ? 7 : 8, leavesPerTip: 1 });
+  scene.add(brain.group, tree.group);
+  canvas.addEventListener('pointerdown', () => brain.think());
+  if (o.reducedMotion) brain.still();
+
+  let current = 0, running = false, visible = true, lastMs = 0, spin = 0;
 
   function layout() {
     const w = canvas.clientWidth, h = canvas.clientHeight;
@@ -179,6 +157,11 @@ export function createStory(o) {
     // Beside the headline on wide screens, above it on phones.
     system.position.set(narrow ? 0 : 23, narrow ? 24 : 1, 0);
     system.scale.setScalar(narrow ? 0.9 : 1.3);
+    // Scenes sit opposite their captions: Mind's caption is on the right, Growth's on the left.
+    brain.group.position.set(narrow ? 0 : -21, narrow ? 16 : 3, 0);
+    brain.group.scale.setScalar(narrow ? 13 : 15);
+    tree.group.position.set(narrow ? 0 : 20, narrow ? -6 : -20, 0);
+    tree.group.scale.setScalar(narrow ? 6.2 : 7.2);
   }
 
   function resize() {
@@ -198,6 +181,8 @@ export function createStory(o) {
     const f = ease(Math.min(1, Math.max(0, current - i)));
     const A = shapes[i], B = shapes[i + 1];
     const time = still ? 0 : ms * 0.001;
+    const dt = still ? 0 : Math.min(0.05, lastMs ? (ms - lastMs) / 1000 : 0);
+    lastMs = ms;
     const near = (k) => Math.max(0, 1 - Math.abs(current - k));
 
     // Three-body: advance the orbit and fade it out as the story moves on.
@@ -210,23 +195,41 @@ export function createStory(o) {
     system.visible = sysAlpha > 0.01;
     system.children.forEach((c) => { c.material.opacity = sysAlpha; });
 
-    // Story particles: morph between shapes, breathing during the Mind act.
+    // Story particles: stars that pull back for Mind and Growth, then fold into the reply beam.
     const b = breath(time);
-    const scale = 1 + 0.05 * b.v * near(1) + 0.02 * Math.sin(time * 0.6) * near(2);
     const wob = still ? 0 : 0.2 + Math.sin(f * Math.PI) * 2.2;
     for (let k = 0; k < N; k++) {
       const j = k * 3, s = seed[k];
-      pos[j] = (A[j] + (B[j] - A[j]) * f) * scale + Math.sin(time * 1.3 + s) * wob * 0.35;
-      pos[j + 1] = (A[j + 1] + (B[j + 1] - A[j + 1]) * f) * scale + Math.cos(time * 1.1 + s * 1.7) * wob * 0.35;
+      pos[j] = A[j] + (B[j] - A[j]) * f + Math.sin(time * 1.3 + s) * wob * 0.35;
+      pos[j + 1] = A[j + 1] + (B[j + 1] - A[j + 1]) * f + Math.cos(time * 1.1 + s * 1.7) * wob * 0.35;
       pos[j + 2] = A[j + 2] + (B[j + 2] - A[j + 2]) * f;
     }
     geo.attributes.position.needsUpdate = true;
     mat.color.copy(palette[i]).lerp(palette[i + 1], f);
-    mat.opacity = 0.45 + 0.45 * Math.min(1, current); // dim stars behind the orbit, full strength after
+    const scenes = Math.max(near(1), near(2));
+    mat.opacity = (0.45 + 0.45 * Math.min(1, current)) * (1 - 0.6 * scenes);
     mat.size = 0.5 + Math.max(0, current - 2.2) * 0.4;
+
+    // Mind: the connectome turns slowly and breathes with the 8-second cycle.
+    const wBrain = Math.pow(near(1), 1.5);
+    if (wBrain > 0.01 || !still) {
+      spin += dt * 0.12;
+      brain.group.rotation.set(0.15, 1.1 + spin, 0);
+      brain.group.scale.setScalar((canvas.clientWidth / canvas.clientHeight < 0.8 ? 13 : 15) * (1 + 0.035 * b.v * wBrain));
+      brain.update(wBrain > 0.01 ? dt : 0, wBrain);
+    }
+
+    // Growth: scrolling grows the tree from 2020 to now; leaves glow as they open.
+    const wTree = Math.pow(near(2), 1.2);
+    const g = Math.min(1, Math.max(0, (current - 1.35) / 0.6));
+    tree.group.rotation.y = 0.4 + time * 0.08;
+    tree.update(g, time, wTree);
+
     renderer.render(scene, camera);
 
-    o.onFrame?.({ act: Math.min(ACTS.length - 1, Math.round(current)), breath: near(1) > 0.5 && !still ? b.phase : '' });
+    const act = Math.min(ACTS.length - 1, Math.round(current));
+    const note = act === 1 && !still ? b.phase : act === 2 ? tree.chapter(g) : '';
+    o.onFrame?.({ act, note });
     if (running && visible && !still) requestAnimationFrame(frame);
   }
 
