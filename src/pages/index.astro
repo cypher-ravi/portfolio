@@ -1,101 +1,149 @@
 ---
 import Base from '../layouts/Base.astro';
 import Story from '../components/Story.astro';
-import { profile, glance, experience, education, work, lab, principles } from '../data/profile';
+import { profile, glance, experience, education, projects, principles } from '../data/profile';
 
 // 1420.405 MHz is the hydrogen line, the frequency radio astronomers (and Contact's Ellie Arroway) listen on.
 const FREQ = '1420.405 MHz';
+const pad = (n: number) => String(n).padStart(2, '0');
 ---
 <Base
   title={`${profile.name} · ${profile.role}`}
   description={`${profile.name}, ${profile.role}. ${profile.headline.join(' ')}`}
 >
+  <a class="skip" href="#main">Skip to content</a>
+
   <header class="bar">
     <div class="wrap bar-inner">
       <a class="mark" href="#story">{profile.name}</a>
       <nav aria-label="Sections">
-        <a href="#experience">Experience</a>
-        <a href="#work">Work</a>
-        <a href="#ai">AI</a>
-        <a href="#lab">Projects</a>
-        <a href="#reply">Contact</a>
+        <a href="#experience" data-nav>Experience</a>
+        <a href="#projects" data-nav>Projects</a>
+        <a href="#ai" data-nav class="opt">AI</a>
+        <a href="#contact" data-nav>Contact</a>
+        <a class="nav-cta" href={profile.links.resume}>Resume</a>
       </nav>
     </div>
   </header>
 
   <Story />
 
-  <main class="wrap">
-    <section id="glance" class="glance" aria-label="At a glance">
+  <main id="main">
+  <div class="wrap">
+    <section id="glance" class="glance" aria-label="At a glance" data-reveal>
       {glance.map((g) => (
         <div>
           <span class="label">{g.label}</span>
           <strong>{g.value}</strong>
         </div>
       ))}
-      <div>
-        <span class="label">Status</span>
-        <strong class="ok">{profile.availability}</strong>
-      </div>
     </section>
 
-    <section id="experience" class="block">
-      <p class="label">Experience</p>
-      <ol class="roles">
-        {experience.map((r) => (
-          <li>
-            <div class="role-head">
-              <h3>{r.title}, {r.company}</h3>
+    <section id="experience" class="block" data-reveal>
+      <header class="head">
+        <p class="label">Experience</p>
+        <h2>Where I've <em>built</em></h2>
+      </header>
+      <div class="journey">
+        <aside class="pin" aria-hidden="true">
+          <span class="pin-count label"><b id="j-num">01</b> / {pad(experience.length)}</span>
+          <span class="pin-period" id="j-period">{experience[0].period}</span>
+          <span class="pin-company" id="j-company">{experience[0].company}</span>
+          <span class="pin-orbit"><i id="j-dot"></i></span>
+        </aside>
+        <ol class="timeline" id="timeline">
+          <span class="rail" aria-hidden="true"><i id="rail-fill"></i></span>
+          {experience.map((r, i) => (
+            <li class={i === 0 ? 'current' : ''} data-i={i} data-period={r.period} data-company={r.company}>
               <span class="period">{r.period}</span>
-            </div>
-            <ul class="points">{r.points.map((p) => <li>{p}</li>)}</ul>
-          </li>
-        ))}
-      </ol>
-      <p class="edu">{education}</p>
+              <div class="role">
+                <h3>{r.title} <span class="at">at {r.company}</span></h3>
+                <ul class="points">{r.points.map((p) => <li>{p}</li>)}</ul>
+                {r.stack && <ul class="tags">{r.stack.map((s) => <li>{s}</li>)}</ul>}
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+      <p class="edu"><span class="label">Education</span> {education}</p>
     </section>
+  </div>
 
-    <section id="work" class="block">
-      <p class="label">Selected work</p>
-      {work.map((w) => (
-        <article class="work">
-          <div class="work-head">
-            <h3>{w.name}</h3>
-            <ul class="stack">{w.stack.map((s) => <li>{s}</li>)}</ul>
-          </div>
-          <p class="tldr">{w.tldr}</p>
-          <ul class="points">{w.points.map((p) => <li>{p}</li>)}</ul>
-          {w.href && <a href={w.href}>Read the case study</a>}
-        </article>
-      ))}
-    </section>
-
-    <section id="ai" class="block">
-      <p class="label">How I use AI</p>
-      <ul class="principles">
-        {principles.map((p) => <li>{p}</li>)}
-      </ul>
-    </section>
-
-    <section id="lab" class="block">
-      <p class="label">Projects</p>
-      <ul class="lab">
-        {lab.map((x) => (
-          <li>
-            <span class={`status ${x.status}`}>{x.status}</span>
-            <div>
+  <section id="projects" class="works" aria-labelledby="works-title">
+    <div class="works-pin">
+      <div class="wrap works-head">
+        <header class="head">
+          <p class="label">Projects</p>
+          <h2 id="works-title">What I've <em>shipped</em>, and what's next</h2>
+        </header>
+        <p class="works-hint label" aria-hidden="true"><span id="works-count">01</span> / {pad(projects.length)} <span class="arrow">→</span></p>
+      </div>
+      <div class="cards-view" id="cards-view">
+        <ul class="cards" id="cards">
+          {projects.map((x, i) => (
+            <li class={`card kind-${x.kind.toLowerCase()} theme-${x.theme.toLowerCase()}`}>
+              <div class="card-top">
+                <span class="theme">{x.theme}</span>
+                <span class="year">{x.year}</span>
+              </div>
               <h3>{x.name}</h3>
-              <p>{x.blurb}</p>
-            </div>
+              <p>{x.tldr}</p>
+              <div class="card-foot">
+                <span class="kind">{x.status ?? x.kind}</span>
+                {x.points.length > 0 && (
+                  <button type="button" class="more" data-open={`p-${i}`} aria-haspopup="dialog">
+                    Details <span aria-hidden="true">+</span>
+                  </button>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  {projects.map((x, i) => x.points.length > 0 && (
+    <dialog class="detail" id={`p-${i}`} aria-labelledby={`p-${i}-t`}>
+      <div class="detail-in">
+        <div class="card-top">
+          <span class="theme">{x.theme} · {x.kind}</span>
+          <form method="dialog"><button class="close" aria-label="Close">×</button></form>
+        </div>
+        <h3 id={`p-${i}-t`}>{x.name}</h3>
+        <p class="tldr">{x.tldr}</p>
+        <ul class="points">{x.points.map((p) => <li>{p}</li>)}</ul>
+        <ul class="tags">{x.stack.map((s) => <li>{s}</li>)}</ul>
+      </div>
+    </dialog>
+  ))}
+
+  <div class="wrap">
+    <section id="ai" class="block" data-reveal>
+      <header class="head">
+        <p class="label">How I use AI</p>
+        <h2>Practical, <em>measured</em>, honest</h2>
+      </header>
+      <ul class="principles">
+        {principles.map((p) => (
+          <li>
+            <p class="p-title">{p.title}</p>
+            <p class="p-body">{p.body}</p>
           </li>
         ))}
       </ul>
     </section>
 
-    <section id="reply" class="block reply">
-      <p class="label">Contact</p>
-      <h2 data-decode>Let's talk.</h2>
-      <p class="addr">{profile.email}</p>
+    <section id="contact" class="block contact" data-reveal>
+      <header class="head">
+        <p class="label">Contact</p>
+        <h2>Let's <em>talk.</em></h2>
+      </header>
+      <p class="lede">{profile.availability}. The fastest way to reach me is email.</p>
+      <div class="email-row">
+        <span class="addr" id="email">{profile.email}</span>
+        <button class="copy" type="button" id="copy-email" aria-live="polite">Copy</button>
+      </div>
       <div class="ctas">
         <a class="btn primary" href={`mailto:${profile.email}`}>Send an email</a>
         <a class="btn" href={profile.links.linkedin}>LinkedIn</a>
@@ -103,99 +151,341 @@ const FREQ = '1420.405 MHz';
         <a class="btn" href={profile.links.leetcode}>LeetCode</a>
       </div>
     </section>
+  </div>
   </main>
 
   <footer class="wrap foot">
     <span class="label">End of transmission · {FREQ}</span>
+    <a href="#story">Back to top ↑</a>
   </footer>
 </Base>
 
+<script>
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clamp = (v: number) => Math.min(1, Math.max(0, v));
+  const pad = (n: number) => String(n).padStart(2, '0');
+
+  // Copy email: show a short confirmation, fall back to selecting the text.
+  const btn = document.getElementById('copy-email') as HTMLButtonElement;
+  const email = document.getElementById('email')!;
+  btn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(email.textContent ?? '');
+      btn.textContent = 'Copied';
+    } catch {
+      const r = document.createRange();
+      r.selectNodeContents(email);
+      getSelection()?.removeAllRanges();
+      getSelection()?.addRange(r);
+      btn.textContent = 'Selected';
+    }
+    setTimeout(() => (btn.textContent = 'Copy'), 1800);
+  });
+
+  // Highlight the nav link for the section in view.
+  const links = new Map(
+    [...document.querySelectorAll<HTMLAnchorElement>('[data-nav]')].map((a) => [a.hash.slice(1), a]),
+  );
+  const spy = new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        links.forEach((a, id) => a.toggleAttribute('aria-current', id === e.target.id));
+      }
+    },
+    { rootMargin: '-45% 0px -50% 0px' },
+  );
+  links.forEach((_, id) => { const el = document.getElementById(id); if (el) spy.observe(el); });
+
+  // Journey: the rail fills as you scroll, and the pinned panel follows the role in view.
+  const timeline = document.getElementById('timeline')!;
+  const fill = document.getElementById('rail-fill')!;
+  const roles = [...timeline.querySelectorAll<HTMLLIElement>(':scope > li')];
+  const jNum = document.getElementById('j-num')!;
+  const jPeriod = document.getElementById('j-period')!;
+  const jCompany = document.getElementById('j-company')!;
+  const jDot = document.getElementById('j-dot')!;
+  let activeRole = 0;
+  const setRole = (i: number) => {
+    if (i === activeRole) return;
+    activeRole = i;
+    const li = roles[i];
+    roles.forEach((r, k) => r.classList.toggle('on', k === i));
+    jNum.textContent = pad(i + 1);
+    jPeriod.textContent = li.dataset.period ?? '';
+    jCompany.textContent = li.dataset.company ?? '';
+    jDot.style.setProperty('--turn', `${(i / roles.length) * 360}deg`);
+    jCompany.animate?.([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: reduced ? 0 : 380, easing: 'ease-out' });
+  };
+  roles[0].classList.add('on');
+
+  // Projects: on wide screens the section pins and the cards slide sideways as you scroll down.
+  const works = document.getElementById('projects')!;
+  const view = document.getElementById('cards-view')!;
+  const cards = document.getElementById('cards')!;
+  const count = document.getElementById('works-count')!;
+  const cardEls = [...cards.children] as HTMLElement[];
+  const wide = matchMedia('(min-width: 900px)');
+  let dist = 0;
+  const layoutWorks = () => {
+    const pin = wide.matches && !reduced;
+    works.classList.toggle('pinned', pin);
+    cards.style.transform = '';
+    dist = pin ? Math.max(0, cards.scrollWidth - view.clientWidth) : 0;
+    works.style.height = pin ? `${innerHeight + dist}px` : '';
+  };
+  const onScroll = () => {
+    const t = timeline.getBoundingClientRect();
+    fill.style.transform = `scaleY(${clamp((innerHeight * 0.55 - t.top) / t.height).toFixed(3)})`;
+    let i = 0;
+    roles.forEach((r, k) => { if (r.getBoundingClientRect().top < innerHeight * 0.55) i = k; });
+    setRole(i);
+
+    if (works.classList.contains('pinned')) {
+      const p = clamp(-works.getBoundingClientRect().top / (dist || 1));
+      cards.style.transform = `translate3d(${(-p * dist).toFixed(1)}px,0,0)`;
+      count.textContent = pad(Math.min(cardEls.length, 1 + Math.round(p * (cardEls.length - 1))));
+    }
+  };
+  view.addEventListener('scroll', () => {
+    const p = clamp(view.scrollLeft / Math.max(1, view.scrollWidth - view.clientWidth));
+    count.textContent = pad(1 + Math.round(p * (cardEls.length - 1)));
+  }, { passive: true });
+  // Keyboard users: when focus lands on an off-screen card, scroll the page so it slides into view.
+  cards.addEventListener('focusin', (e) => {
+    if (!works.classList.contains('pinned')) return;
+    const card = (e.target as HTMLElement).closest('.card') as HTMLElement | null;
+    if (!card) return;
+    const x = Math.min(dist, Math.max(0, card.offsetLeft - 20));
+    scrollTo({ top: works.offsetTop + x, behavior: 'instant' as ScrollBehavior });
+  });
+  layoutWorks();
+  onScroll();
+  addEventListener('scroll', onScroll, { passive: true });
+  addEventListener('resize', () => { layoutWorks(); onScroll(); });
+  wide.addEventListener('change', () => { layoutWorks(); onScroll(); });
+
+  // Project details open in a native dialog: Esc closes it and focus returns to the button.
+  document.querySelectorAll<HTMLButtonElement>('[data-open]').forEach((b) => {
+    const d = document.getElementById(b.dataset.open!) as HTMLDialogElement;
+    b.addEventListener('click', () => d.showModal());
+    d.addEventListener('click', (e) => { if (e.target === d) d.close(); });
+  });
+</script>
+
 <style>
+  .skip {
+    position: absolute; left: 12px; top: -60px; z-index: 10;
+    background: var(--signal); color: var(--void); padding: 10px 14px; border-radius: 6px; font-weight: 600;
+  }
+  .skip:focus { top: 12px; }
+
   .bar {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    margin-inline: -20px;
-    padding-inline: 20px;
-    background: color-mix(in srgb, var(--void) 82%, transparent);
-    backdrop-filter: blur(8px);
+    position: sticky; top: 0; z-index: 5;
+    margin-inline: -20px; padding-inline: 20px;
+    background: color-mix(in srgb, var(--void) 70%, transparent);
+    backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--line);
   }
-  .bar-inner { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-block: 14px; }
-  .mark { font: 400 1.45rem var(--display); color: var(--text); text-decoration: none; }
-  nav { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px 18px; font: 500 0.88rem var(--body); }
-  nav a { color: var(--muted); text-decoration: none; }
-  nav a:hover { color: var(--signal); }
+  .bar-inner { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-block: 12px; }
+  .mark { font: 700 1.15rem var(--display); letter-spacing: 0.08em; color: var(--text); text-decoration: none; }
+  nav { display: flex; align-items: center; gap: 22px; font: 500 0.9rem var(--body); }
+  nav a { color: var(--muted); text-decoration: none; transition: color 0.2s; position: relative; }
+  nav a:hover, nav a[aria-current] { color: var(--text); }
+  nav a[aria-current]::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: -6px; height: 1px; background: var(--signal);
+  }
+  .nav-cta { padding: 7px 14px; border: 1px solid var(--signal-dim); border-radius: 999px; color: var(--text) !important; }
+  .nav-cta:hover { border-color: var(--signal); }
 
   .ctas { display: flex; flex-wrap: wrap; gap: 12px; }
   .btn {
-    font: 500 0.92rem var(--body);
-    padding: 11px 18px;
-    border: 1px solid var(--signal-dim);
-    border-radius: 6px;
-    color: var(--text);
-    text-decoration: none;
-    transition: border-color 0.2s, background 0.2s;
+    font: 500 0.95rem var(--body); padding: 12px 20px; border: 1px solid var(--signal-dim); border-radius: 999px;
+    color: var(--text); text-decoration: none; transition: border-color 0.2s, background 0.2s, transform 0.2s;
   }
-  .btn:hover { border-color: var(--signal); }
+  .btn:hover { border-color: var(--signal); transform: translateY(-1px); }
   .btn.primary { background: var(--signal); border-color: var(--signal); color: var(--void); }
-  .btn.primary:hover { background: var(--text); }
+  .btn.primary:hover { background: var(--text); border-color: var(--text); }
 
+  /* At a glance */
   .glance {
-    scroll-margin-top: 80px;
-    margin-top: 64px;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    background: color-mix(in srgb, var(--panel) 85%, transparent);
+    scroll-margin-top: 80px; margin-top: 72px;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border: 1px solid var(--line); border-radius: 14px;
+    background: color-mix(in srgb, var(--panel) 80%, transparent);
   }
-  .glance div { display: grid; gap: 8px; padding: 18px 20px; border-left: 1px solid var(--line); }
+  .glance div { display: grid; gap: 8px; align-content: start; padding: 20px 22px; border-left: 1px solid var(--line); }
   .glance div:first-child { border-left: 0; }
-  .glance strong { font-weight: 500; font-size: 0.98rem; }
-  .ok { color: var(--flare); }
+  .glance strong { font-weight: 500; font-size: 1rem; line-height: 1.45; }
 
-  .block { padding-block: 96px 0; display: grid; gap: 22px; }
-  h2 { font-size: clamp(2rem, 4.4vw, 2.8rem); }
-  h3 { font-size: 1.05rem; }
-  .roles { list-style: none; margin: 0; padding: 0; display: grid; }
-  .roles > li { display: grid; gap: 10px; padding-block: 22px; border-top: 1px solid var(--line); }
-  .role-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; align-items: baseline; }
-  .period { font: 0.8rem var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
-  .edu { max-width: none; color: var(--muted); font-size: 0.95rem; padding-top: 18px; border-top: 1px solid var(--line); }
-
-  .work {
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 24px;
-    display: grid;
-    gap: 14px;
-    background: color-mix(in srgb, var(--panel) 85%, transparent);
-  }
-  .work-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: center; }
-  .stack { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; }
-  .stack li { font: 0.72rem/1 var(--mono); padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); }
-  .tldr { font-size: 1.05rem; }
+  /* Sections */
+  .block { padding-block: 120px 0; display: grid; gap: 36px; }
+  .head { display: grid; gap: 10px; }
+  h2 { font-size: clamp(1.7rem, 3.6vw, 2.5rem); }
+  h3 { font-size: 1.08rem; }
   .points { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; color: var(--muted); }
+  .points li::marker { color: var(--signal-dim); }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; }
+  .tags li { font: 0.74rem/1 var(--mono); padding: 6px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); }
 
-  .principles { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; font: 400 clamp(1.6rem, 3.6vw, 2.3rem)/1.2 var(--display); }
-  .principles li { padding-top: 14px; border-top: 1px solid var(--line); }
+  /* Journey: pinned panel on the left, timeline on a glowing rail on the right */
+  .journey { display: grid; grid-template-columns: 300px 1fr; gap: 48px; align-items: start; }
+  .pin {
+    position: sticky; top: 110px; display: grid; gap: 14px; padding: 26px; border-radius: 16px;
+    border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 60%, transparent); backdrop-filter: blur(10px);
+  }
+  .pin-count b { color: var(--signal); font-weight: 500; }
+  .pin-period { font: 500 0.85rem var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+  .pin-company { font: 600 clamp(1.4rem, 2.2vw, 1.8rem)/1.2 var(--display); min-height: 2.2em; }
+  .pin-orbit {
+    position: relative; width: 120px; aspect-ratio: 1; margin-top: 8px; border-radius: 50%;
+    border: 1px dashed var(--signal-dim);
+  }
+  .pin-orbit::before {
+    content: ''; position: absolute; inset: 42%; border-radius: 50%; background: var(--flare); box-shadow: 0 0 18px var(--flare);
+  }
+  .pin-orbit i {
+    --turn: 0deg; position: absolute; inset: 0; transform: rotate(var(--turn)); transition: transform 0.7s cubic-bezier(.2,.7,.2,1);
+  }
+  .pin-orbit i::after {
+    content: ''; position: absolute; top: -5px; left: calc(50% - 5px); width: 10px; height: 10px; border-radius: 50%;
+    background: var(--signal); box-shadow: 0 0 12px var(--signal);
+  }
 
-  .lab { list-style: none; margin: 0; padding: 0; display: grid; }
-  .lab li { display: grid; grid-template-columns: 92px 1fr; gap: 18px; padding-block: 18px; border-top: 1px solid var(--line); align-items: baseline; }
-  .lab p { color: var(--muted); font-size: 0.98rem; }
-  .status { font: 500 0.7rem var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
-  .status.building { color: var(--flare); }
-  .status.live { color: var(--signal); }
+  .timeline { list-style: none; margin: 0; padding: 0 0 0 34px; display: grid; gap: 18px; position: relative; }
+  .rail { position: absolute; left: 8px; top: 8px; bottom: 8px; width: 2px; background: var(--line); border-radius: 2px; }
+  .rail i {
+    position: absolute; inset: 0; transform-origin: top; transform: scaleY(0);
+    background: linear-gradient(var(--signal), var(--mind)); box-shadow: 0 0 10px var(--signal);
+  }
+  .timeline > li {
+    position: relative; display: grid; gap: 10px; padding: 22px 24px; border-radius: 14px;
+    border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 55%, transparent);
+    backdrop-filter: blur(8px); transition: border-color 0.4s, background 0.4s, opacity 0.4s;
+    opacity: 0.55;
+  }
+  .timeline > li.on { opacity: 1; border-color: var(--signal-dim); background: color-mix(in srgb, var(--panel) 85%, transparent); }
+  .timeline > li::before {
+    content: ''; position: absolute; left: -31px; top: 28px; width: 10px; height: 10px; border-radius: 50%;
+    background: var(--void); border: 2px solid var(--signal-dim); transition: background 0.4s, border-color 0.4s, box-shadow 0.4s;
+  }
+  .timeline > li.on::before { background: var(--signal); border-color: var(--signal); box-shadow: 0 0 12px var(--signal); }
+  .period { font: 0.8rem var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+  .current .period { color: var(--signal); }
+  .role { display: grid; gap: 12px; }
+  .at { color: var(--muted); font-weight: 400; }
+  .edu { max-width: none; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; color: var(--muted); padding-top: 22px; border-top: 1px solid var(--line); }
 
-  .reply { padding-bottom: 40px; }
-  .addr { font: 500 1.1rem var(--mono); color: var(--signal); user-select: all; }
-  .foot { padding-block: 40px 48px; border-top: 1px solid var(--line); margin-top: 80px; }
+  /* Projects: a full-width band; cards slide sideways */
+  .works {
+    position: relative; margin: 140px -20px 0; padding-block: 90px;
+    background:
+      radial-gradient(60% 80% at 80% 30%, color-mix(in srgb, var(--mind) 10%, transparent), transparent 70%),
+      linear-gradient(var(--void), #070b10 20%, #070b10 80%, var(--void));
+    border-block: 1px solid var(--line);
+  }
+  .works-head { width: 100%; max-width: 1080px; display: flex; justify-content: space-between; align-items: end; gap: 20px; padding-inline: 20px; margin-bottom: 36px; }
+  .works-hint { white-space: nowrap; }
+  .works-hint span:first-child { color: var(--signal); }
+  .arrow { display: inline-block; margin-left: 6px; color: var(--signal); animation: nudge 1.8s ease-in-out infinite; }
+  @keyframes nudge { 50% { transform: translateX(5px); } }
 
+  .cards-view {
+    overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none;
+    padding-inline: max(20px, calc((100vw - 1040px) / 2)); scroll-padding-inline: max(20px, calc((100vw - 1040px) / 2));
+  }
+  .cards-view::-webkit-scrollbar { display: none; }
+  .cards { list-style: none; margin: 0; padding: 4px 0 8px; display: flex; gap: 18px; width: max-content; will-change: transform; }
+  .card {
+    --tone: var(--signal);
+    scroll-snap-align: start; width: min(78vw, 320px); min-height: 300px;
+    display: flex; flex-direction: column; gap: 12px; padding: 24px; border-radius: 18px;
+    border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 85%, transparent);
+    transition: border-color 0.3s, transform 0.3s;
+  }
+  .card:hover { border-color: color-mix(in srgb, var(--tone) 55%, transparent); transform: translateY(-3px); }
+  .card h3 { font: 600 1.35rem/1.2 var(--display); margin-top: auto; }
+  .card p { color: var(--muted); font-size: 0.97rem; }
+  .kind-lab { background: transparent; border-style: dashed; }
+  .theme-space { --tone: var(--signal); } .theme-health { --tone: #ff9d7a; } .theme-mind { --tone: var(--mind); } .theme-ai { --tone: var(--growth); }
+  .card-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .theme { font: 500 0.72rem var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--tone, var(--signal)); }
+  .year { font: 0.72rem var(--mono); color: var(--muted); }
+  .card-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .kind { font: 0.74rem var(--mono); color: var(--muted); }
+  .more {
+    font: 500 0.82rem var(--body); padding: 7px 13px; border-radius: 999px; cursor: pointer;
+    border: 1px solid var(--signal-dim); background: none; color: var(--text); transition: border-color 0.2s, background 0.2s;
+  }
+  .more:hover { border-color: var(--tone); background: color-mix(in srgb, var(--tone) 12%, transparent); }
+
+  .works.pinned { padding-block: 0; }
+  .works.pinned .works-pin {
+    position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .works.pinned .cards-view { overflow: visible; scroll-snap-type: none; }
+
+  /* Project detail popup */
+  .detail {
+    width: min(560px, calc(100vw - 32px)); padding: 0; border-radius: 18px; color: var(--text);
+    border: 1px solid var(--signal-dim); background: var(--panel);
+  }
+  .detail::backdrop { background: color-mix(in srgb, var(--void) 70%, transparent); backdrop-filter: blur(6px); }
+  .detail[open] { animation: pop 0.25s ease-out; }
+  @keyframes pop { from { opacity: 0; transform: translateY(12px) scale(0.98); } }
+  .detail-in { display: grid; gap: 16px; padding: 26px; }
+  .detail h3 { font: 600 1.8rem/1.15 var(--display); }
+  .detail .tldr { font-size: 1.08rem; }
+  .close {
+    width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; line-height: 1;
+    border: 1px solid var(--line); background: none; color: var(--muted);
+  }
+  .close:hover { color: var(--text); border-color: var(--signal-dim); }
+
+  /* AI */
+  .principles { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+  .principles li { display: grid; gap: 10px; align-content: start; padding-top: 18px; border-top: 1px solid var(--signal-dim); }
+  .p-title { font: 600 clamp(1.25rem, 2vw, 1.45rem)/1.3 var(--body); }
+  .p-body { color: var(--muted); font-size: 0.97rem; }
+
+  /* Contact */
+  .contact { padding-bottom: 40px; gap: 26px; }
+  .lede { font-size: 1.1rem; color: var(--muted); }
+  .email-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  .addr { font: 500 clamp(1.3rem, 3.2vw, 2rem) var(--body); color: var(--text); user-select: all; overflow-wrap: anywhere; }
+  .copy {
+    font: 500 0.8rem var(--mono); padding: 7px 12px; border-radius: 999px; cursor: pointer;
+    border: 1px solid var(--signal-dim); background: none; color: var(--signal);
+  }
+  .copy:hover { border-color: var(--signal); }
+
+  .foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; padding-block: 36px 48px; border-top: 1px solid var(--line); margin-top: 96px; font-size: 0.9rem; }
+  .foot a { color: var(--muted); text-decoration: none; }
+  .foot a:hover { color: var(--text); }
+
+  @media (max-width: 900px) {
+    .principles { grid-template-columns: 1fr; gap: 22px; }
+    .glance { grid-template-columns: repeat(2, 1fr); }
+    .glance div:nth-child(3) { border-left: 0; }
+    .glance div:nth-child(n + 3) { border-top: 1px solid var(--line); }
+    .journey { grid-template-columns: 1fr; }
+    .pin { display: none; }
+    .timeline > li { opacity: 1; }
+  }
   @media (max-width: 560px) {
-    nav { gap: 12px; }
-    .glance div { border-left: 0; border-top: 1px solid var(--line); }
+    nav { gap: 14px; font-size: 0.85rem; }
+    nav .opt { display: none; }
+    .nav-cta { padding: 6px 11px; }
+    .block { padding-top: 88px; }
+    .glance { grid-template-columns: 1fr; }
+    .glance div { border-left: 0 !important; border-top: 1px solid var(--line); }
     .glance div:first-child { border-top: 0; }
-    .lab li { grid-template-columns: 1fr; gap: 6px; }
+    .timeline { padding-left: 26px; }
+    .timeline > li { padding: 18px; }
+    .timeline > li::before { left: -23px; }
+    .rail { left: 4px; }
+    .works { margin-top: 100px; padding-block: 70px; }
+    .works-head { flex-direction: column; align-items: start; }
   }
 </style>
