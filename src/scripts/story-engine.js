@@ -1,55 +1,68 @@
-// The Signal: one particle system that tells the story in five acts.
-//   0 Cosmos  – scattered stars (space tech)
-//   1 Pulse   – rings and an ECG trace beating at 60 bpm (healthcare)
-//   2 Mind    – the name, breathing on a slow 4s-in / 4s-out cycle (psychology, mental health)
-//   3 Growth  – a sunflower spiral with four projects in bloom (life as a force of nature)
-//   4 Reply   – everything folds into one beam aimed at the visitor
+// The Signal: the opening story, drawn with Three.js.
+//   0 Cosmos – a three-body system in a figure-eight orbit, among scattered stars (space tech)
+//   1 Mind   – the stars form the name and breathe on a 4s-in / 4s-out cycle (psychology, mental health)
+//   2 Growth – a sunflower spiral with four projects in bloom (life as a force of nature)
+//   3 Reply  – everything folds into one beam aimed at the visitor
 // Framework-free: pass in THREE so the site (npm) and demos (CDN) share this file.
 
-export const ACTS = ['Cosmos', 'Pulse', 'Mind', 'Growth', 'Reply'];
-const COLORS = [0x8fd3ff, 0xff8a80, 0xb7a8ff, 0x9fe3a8, 0xffc46b];
+export const ACTS = ['Cosmos', 'Mind', 'Growth', 'Reply'];
+const COLORS = [0x8fd3ff, 0xb7a8ff, 0x9fe3a8, 0xffc46b];
+const BODY_COLORS = [0xffc46b, 0x8fd3ff, 0xff9d7a];
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5)); // ≈137.5°, how sunflowers pack seeds
 
 const rand = (a, b) => a + Math.random() * (b - a);
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
-/** Lub-dub at 60 bpm: a strong beat, then a softer one 0.22 s later. Returns 0..1. */
-export function heartbeat(seconds) {
-  const t = seconds % 1;
-  return Math.exp(-((t / 0.05) ** 2)) + 0.6 * Math.exp(-(((t - 0.22) / 0.05) ** 2));
-}
-
 /** Box-style breathing: 4 s in, 4 s out. Returns -1..1 and the current phase. */
 export function breath(seconds) {
-  const v = Math.sin((seconds / 8) * Math.PI * 2 - Math.PI / 2);
-  return { v, phase: Math.cos((seconds / 8) * Math.PI * 2 - Math.PI / 2) > 0 ? 'Breathe in' : 'Breathe out' };
+  const a = (seconds / 8) * Math.PI * 2 - Math.PI / 2;
+  return { v: Math.sin(a), phase: Math.cos(a) > 0 ? 'Breathe in' : 'Breathe out' };
 }
 
-function ecgY(x) {
-  // One heartbeat every 24 units: P wave, QRS spike, T wave.
-  const u = (((x % 24) + 24) % 24) - 12;
-  return 1.2 * Math.exp(-(((u + 6) / 1.2) ** 2)) - 1.5 * Math.exp(-(((u + 0.8) / 0.35) ** 2)) + 9 * Math.exp(-((u / 0.45) ** 2)) - 2.2 * Math.exp(-(((u - 0.9) / 0.4) ** 2)) + 2 * Math.exp(-(((u - 6) / 1.8) ** 2));
+/**
+ * Three equal masses on the figure-eight orbit (Chenciner & Montgomery, 2000):
+ * one of the few stable solutions to the three-body problem. Units: G = m = 1.
+ * Integrated with velocity Verlet, which keeps the orbit from drifting.
+ */
+export function createThreeBody() {
+  const p = [[-0.97000436, 0.24308753], [0.97000436, -0.24308753], [0, 0]];
+  const v3 = [-0.93240737, -0.86473146];
+  const v = [[-v3[0] / 2, -v3[1] / 2], [-v3[0] / 2, -v3[1] / 2], [v3[0], v3[1]]];
+
+  function accel() {
+    const a = [[0, 0], [0, 0], [0, 0]];
+    for (let i = 0; i < 3; i++) for (let j = i + 1; j < 3; j++) {
+      const dx = p[j][0] - p[i][0], dy = p[j][1] - p[i][1];
+      const r2 = dx * dx + dy * dy + 1e-6, f = 1 / (r2 * Math.sqrt(r2));
+      a[i][0] += dx * f; a[i][1] += dy * f;
+      a[j][0] -= dx * f; a[j][1] -= dy * f;
+    }
+    return a;
+  }
+
+  let a = accel();
+  return {
+    positions: p,
+    step(dt) {
+      for (let i = 0; i < 3; i++) {
+        v[i][0] += 0.5 * dt * a[i][0]; v[i][1] += 0.5 * dt * a[i][1];
+        p[i][0] += dt * v[i][0]; p[i][1] += dt * v[i][1];
+      }
+      a = accel();
+      for (let i = 0; i < 3; i++) { v[i][0] += 0.5 * dt * a[i][0]; v[i][1] += 0.5 * dt * a[i][1]; }
+    },
+  };
 }
 
 function buildShapes(N, word) {
   const cosmos = new Float32Array(N * 3);
-  const pulse = new Float32Array(N * 3);
   const name = new Float32Array(N * 3);
   const growth = new Float32Array(N * 3);
   const reply = new Float32Array(N * 3);
 
   for (let i = 0; i < N; i++) {
     const j = i * 3;
-    cosmos[j] = rand(-70, 70); cosmos[j + 1] = rand(-45, 45); cosmos[j + 2] = rand(-40, 20);
-
-    if (i % 10 < 3) { // ECG trace across the screen
-      const x = rand(-60, 60);
-      pulse[j] = x; pulse[j + 1] = ecgY(x) - 16; pulse[j + 2] = rand(-0.3, 0.3);
-    } else {
-      const ring = i % 5, r = 4 + ring * 5 + rand(-0.25, 0.25), a = Math.random() * Math.PI * 2;
-      pulse[j] = Math.cos(a) * r; pulse[j + 1] = Math.sin(a) * r + 6; pulse[j + 2] = rand(-0.5, 0.5) - ring * 0.8;
-    }
-
+    cosmos[j] = rand(-80, 80); cosmos[j + 1] = rand(-50, 50); cosmos[j + 2] = rand(-60, 0);
     const t = Math.random(), br = Math.pow(Math.random(), 3) * 1.4 * (1 - t * 0.6), ba = Math.random() * Math.PI * 2;
     reply[j] = Math.cos(ba) * br; reply[j + 1] = Math.sin(ba) * br; reply[j + 2] = -80 + t * 120;
   }
@@ -64,23 +77,19 @@ function buildShapes(N, word) {
   const d = g.getImageData(0, 0, W, H).data, pts = [];
   for (let y = 0; y < H; y += 2) for (let x = 0; x < W; x += 2) if (d[(y * W + x) * 4 + 3] > 128) pts.push([x, y]);
   for (let i = 0; i < N; i++) {
-    const p = pts[(Math.random() * pts.length) | 0] || [W / 2, H / 2];
-    name[i * 3] = (p[0] - W / 2) * 0.085 + rand(-0.15, 0.15);
-    name[i * 3 + 1] = -(p[1] - H / 2) * 0.085 + 8 + rand(-0.15, 0.15);
+    const q = pts[(Math.random() * pts.length) | 0] || [W / 2, H / 2];
+    name[i * 3] = (q[0] - W / 2) * 0.085 + rand(-0.15, 0.15);
+    name[i * 3 + 1] = -(q[1] - H / 2) * 0.085 + 8 + rand(-0.15, 0.15);
     name[i * 3 + 2] = rand(-0.8, 0.8);
   }
 
   // Growth: a phyllotaxis disc, with four denser blooms for the projects.
-  const blooms = [];
   const spiralCount = Math.floor(N * 0.78);
   for (let k = 0; k < spiralCount; k++) {
-    const r = 0.62 * Math.sqrt(k * (1400 / spiralCount)), a = k * GOLDEN_ANGLE;
-    growth[k * 3] = Math.cos(a) * r; growth[k * 3 + 1] = Math.sin(a) * r * 0.9 + 4; growth[k * 3 + 2] = -r * 0.25;
+    const r = 0.62 * Math.sqrt(k * (1400 / spiralCount)), ang = k * GOLDEN_ANGLE;
+    growth[k * 3] = Math.cos(ang) * r; growth[k * 3 + 1] = Math.sin(ang) * r * 0.9 + 4; growth[k * 3 + 2] = -r * 0.25;
   }
-  for (let b = 0; b < 4; b++) {
-    const a = b * (Math.PI / 2) + 0.6, r = 15;
-    blooms.push([Math.cos(a) * r, Math.sin(a) * r * 0.9 + 4, 3]);
-  }
+  const blooms = [0, 1, 2, 3].map((b) => [Math.cos(b * Math.PI / 2 + 0.6) * 15, Math.sin(b * Math.PI / 2 + 0.6) * 13.5 + 4, 3]);
   for (let k = spiralCount; k < N; k++) {
     const bl = blooms[k % 4], r = Math.pow(Math.random(), 2) * 3, th = Math.random() * Math.PI * 2, ph = Math.acos(rand(-1, 1));
     growth[k * 3] = bl[0] + r * Math.sin(ph) * Math.cos(th);
@@ -88,7 +97,16 @@ function buildShapes(N, word) {
     growth[k * 3 + 2] = bl[2] + r * Math.cos(ph);
   }
 
-  return [cosmos, pulse, name, growth, reply];
+  return [cosmos, name, growth, reply];
+}
+
+function glowTexture(THREE) {
+  const sc = document.createElement('canvas');
+  sc.width = sc.height = 64;
+  const sg = sc.getContext('2d'), grad = sg.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grad.addColorStop(0, 'rgba(255,255,255,1)'); grad.addColorStop(0.35, 'rgba(255,255,255,.55)'); grad.addColorStop(1, 'rgba(255,255,255,0)');
+  sg.fillStyle = grad; sg.fillRect(0, 0, 64, 64);
+  return new THREE.CanvasTexture(sc);
 }
 
 /**
@@ -102,25 +120,66 @@ export function createStory(o) {
   renderer.setClearColor(0x05070a, 1);
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 200);
+  const glow = glowTexture(THREE);
 
+  // Story particles.
   const N = window.innerWidth < 700 ? 3000 : 6000;
   const shapes = buildShapes(N, o.word);
   const pos = new Float32Array(shapes[0]);
   const seed = new Float32Array(N).map(() => Math.random() * 1000);
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-
-  const sc = document.createElement('canvas');
-  sc.width = sc.height = 64;
-  const sg = sc.getContext('2d'), grad = sg.createRadialGradient(32, 32, 0, 32, 32, 32);
-  grad.addColorStop(0, 'rgba(255,255,255,1)'); grad.addColorStop(0.35, 'rgba(255,255,255,.55)'); grad.addColorStop(1, 'rgba(255,255,255,0)');
-  sg.fillStyle = grad; sg.fillRect(0, 0, 64, 64);
-  const mat = new THREE.PointsMaterial({ size: 0.55, map: new THREE.CanvasTexture(sc), color: COLORS[0], transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.9 });
-  const points = new THREE.Points(geo, mat);
-  scene.add(points);
+  const mat = new THREE.PointsMaterial({ size: 0.5, map: glow, color: COLORS[0], transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.9 });
+  scene.add(new THREE.Points(geo, mat));
   const palette = COLORS.map((c) => new THREE.Color(c));
 
+  // Three-body system: three suns and their fading trails.
+  const sim = createThreeBody();
+  const system = new THREE.Group();
+  scene.add(system);
+  const TRAIL = 420;
+  const suns = [], trails = [];
+  for (let b = 0; b < 3; b++) {
+    const color = new THREE.Color(BODY_COLORS[b]);
+    const sun = new THREE.Sprite(new THREE.SpriteMaterial({ map: glow, color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    sun.scale.set(3.2, 3.2, 1);
+    system.add(sun);
+    suns.push(sun);
+
+    const tp = new Float32Array(TRAIL * 3), tc = new Float32Array(TRAIL * 3);
+    for (let k = 0; k < TRAIL; k++) {
+      const fade = Math.pow(k / (TRAIL - 1), 1.6); // newest point (end) is brightest
+      tc[k * 3] = color.r * fade; tc[k * 3 + 1] = color.g * fade; tc[k * 3 + 2] = color.b * fade;
+    }
+    const tg = new THREE.BufferGeometry();
+    tg.setAttribute('position', new THREE.BufferAttribute(tp, 3));
+    tg.setAttribute('color', new THREE.BufferAttribute(tc, 3));
+    const line = new THREE.Line(tg, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+    system.add(line);
+    trails.push(tp);
+  }
+  const ORBIT_SCALE = 11;
+  const pushTrail = () => {
+    for (let b = 0; b < 3; b++) {
+      const tp = trails[b];
+      tp.copyWithin(0, 3);
+      tp[TRAIL * 3 - 3] = sim.positions[b][0] * ORBIT_SCALE;
+      tp[TRAIL * 3 - 2] = sim.positions[b][1] * ORBIT_SCALE;
+      tp[TRAIL * 3 - 1] = 0;
+    }
+  };
+  // Pre-roll so the trails are full on the first frame, which is also the reduced-motion still.
+  for (let k = 0; k < TRAIL; k++) { for (let s = 0; s < 3; s++) sim.step(0.0015); pushTrail(); }
+
   let current = 0, running = false, visible = true;
+
+  function layout() {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    const narrow = w / h < 0.8;
+    // Beside the headline on wide screens, above it on phones.
+    system.position.set(narrow ? 0 : 23, narrow ? 24 : 1, 0);
+    system.scale.setScalar(narrow ? 0.9 : 1.3);
+  }
 
   function resize() {
     const w = canvas.clientWidth, h = canvas.clientHeight;
@@ -128,6 +187,7 @@ export function createStory(o) {
     camera.aspect = w / h;
     camera.position.set(0, 0, w / h < 0.8 ? 95 : 60);
     camera.updateProjectionMatrix();
+    layout();
   }
 
   function frame(ms) {
@@ -138,14 +198,22 @@ export function createStory(o) {
     const f = ease(Math.min(1, Math.max(0, current - i)));
     const A = shapes[i], B = shapes[i + 1];
     const time = still ? 0 : ms * 0.001;
-
-    // Each act has its own rhythm, weighted by how close we are to it.
     const near = (k) => Math.max(0, 1 - Math.abs(current - k));
-    const beat = heartbeat(time) * near(1);
-    const b = breath(time);
-    const scale = 1 + 0.07 * beat + 0.05 * b.v * near(2) + 0.02 * Math.sin(time * 0.6) * near(3);
-    const wob = still ? 0 : 0.2 + Math.sin(f * Math.PI) * 2.2;
 
+    // Three-body: advance the orbit and fade it out as the story moves on.
+    if (!still) { for (let s = 0; s < 8; s++) sim.step(0.0015); pushTrail(); }
+    for (let b = 0; b < 3; b++) {
+      suns[b].position.set(sim.positions[b][0] * ORBIT_SCALE, sim.positions[b][1] * ORBIT_SCALE, 0);
+      system.children[b * 2 + 1].geometry.attributes.position.needsUpdate = true;
+    }
+    const sysAlpha = Math.max(0, 1 - current * 1.6);
+    system.visible = sysAlpha > 0.01;
+    system.children.forEach((c) => { c.material.opacity = sysAlpha; });
+
+    // Story particles: morph between shapes, breathing during the Mind act.
+    const b = breath(time);
+    const scale = 1 + 0.05 * b.v * near(1) + 0.02 * Math.sin(time * 0.6) * near(2);
+    const wob = still ? 0 : 0.2 + Math.sin(f * Math.PI) * 2.2;
     for (let k = 0; k < N; k++) {
       const j = k * 3, s = seed[k];
       pos[j] = (A[j] + (B[j] - A[j]) * f) * scale + Math.sin(time * 1.3 + s) * wob * 0.35;
@@ -153,29 +221,21 @@ export function createStory(o) {
       pos[j + 2] = A[j + 2] + (B[j + 2] - A[j + 2]) * f;
     }
     geo.attributes.position.needsUpdate = true;
-
-    points.rotation.y = Math.sin(time * 0.2) * 0.12;
-    points.rotation.z = time * 0.05 * near(3); // the spiral turns slowly, like growth
     mat.color.copy(palette[i]).lerp(palette[i + 1], f);
-    mat.size = 0.55 + 0.25 * beat + Math.max(0, current - 3.2) * 0.4;
+    mat.opacity = 0.45 + 0.45 * Math.min(1, current); // dim stars behind the orbit, full strength after
+    mat.size = 0.5 + Math.max(0, current - 2.2) * 0.4;
     renderer.render(scene, camera);
 
-    o.onFrame?.({ act: Math.min(ACTS.length - 1, Math.round(current)), breath: near(2) > 0.5 && !still ? b.phase : '' });
+    o.onFrame?.({ act: Math.min(ACTS.length - 1, Math.round(current)), breath: near(1) > 0.5 && !still ? b.phase : '' });
     if (running && visible && !still) requestAnimationFrame(frame);
-  }
-
-  function start() {
-    if (running) return;
-    running = true;
-    requestAnimationFrame(frame);
   }
 
   resize();
   return {
     resize() { resize(); requestAnimationFrame(frame); },
-    setVisible(v) { const was = visible; visible = v; if (v && !was) requestAnimationFrame(frame); },
+    setVisible(v) { const was = visible; visible = v; if (v && !was && running) requestAnimationFrame(frame); },
     /** For reduced motion: draw once per scroll instead of looping. */
     draw() { requestAnimationFrame(frame); },
-    start,
+    start() { if (running) return; running = true; requestAnimationFrame(frame); },
   };
 }
