@@ -1,6 +1,6 @@
 # Portfolio
 
-Ravi's personal site. Theme: **First Contact**. The page opens with *The Signal*, a four-act Three.js scroll story (Cosmos, Mind, Growth, Reply). The hero shows the three-body problem: three suns on the stable figure-eight orbit, simulated live. The engine is `src/scripts/story-engine.js`. Type: Instrument Serif for headings, Geist for text, Geist Mono for labels, all self-hosted.
+Ravi's personal site. Theme: **First Contact**. The page opens with *The Signal*, a four-act Three.js scroll story (Cosmos, Mind, Growth, Reply). The hero shows the three-body problem: three suns on the stable figure-eight orbit, simulated live. The engine is `src/scripts/story-engine.js`. Type: Geist throughout, self-hosted.
 
 ## Develop
 
