@@ -1,0 +1,89 @@
+---
+// The particle field: one fixed canvas behind the page. Sections marked data-scene tell it
+// where to stand and which shape to take. Decoration only: all text stays in the HTML.
+
+// Still fallback for browsers without WebGL: the hero sphere, drawn as dots once at build time.
+const dots = Array.from({ length: 420 }, (_, i) => {
+  const y = 1 - (i / 419) * 2, r = Math.sqrt(1 - y * y), th = Math.PI * (3 - Math.sqrt(5)) * i;
+  const z = Math.sin(th) * r;
+  return { cx: 100 + Math.cos(th) * r * 86, cy: 100 - y * 86, o: 0.2 + 0.8 * ((z + 1) / 2), s: 0.8 + ((z + 1) / 2) * 0.9 };
+}).sort((a, b) => a.o - b.o);
+---
+<div class="field" id="field" aria-hidden="true">
+  <canvas id="field-gl"></canvas>
+  <svg class="still" viewBox="0 0 200 200">
+    {dots.map((d) => <circle cx={d.cx.toFixed(1)} cy={d.cy.toFixed(1)} r={d.s.toFixed(2)} opacity={d.o.toFixed(2)} />)}
+  </svg>
+</div>
+
+<style>
+  .field { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  #field-gl { display: block; width: 100%; height: 100%; opacity: 0; }
+  .still { display: none; position: absolute; width: min(34vw, 380px); right: 9vw; top: 50%; transform: translateY(-50%); fill: var(--accent); }
+  .field.no-gl #field-gl { display: none; }
+  .field.no-gl .still { display: block; }
+  :global(html.field-hover), :global(html.field-hover body) { cursor: grab; }
+  :global(html.field-drag), :global(html.field-drag *) { cursor: grabbing !important; user-select: none; }
+  @media (max-width: 760px) {
+    .still { width: 52vw; right: 24vw; top: 96px; transform: none; }
+    .field.no-gl.away .still { opacity: 0.15; }
+  }
+</style>
+
+<script>
+  import { revealAfter } from '../scripts/motion';
+
+  const root = document.getElementById('field')!;
+  const canvas = document.getElementById('field-gl') as HTMLCanvasElement;
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Keep in sync with SCENES in field.js (not imported, so the engine stays lazy-loaded).
+  const SCENES = ['hero', 'experience', 'projects', 'ai', 'contact'];
+  const sections = SCENES.map((s) => document.querySelector<HTMLElement>(`[data-scene="${s}"]`)).filter(Boolean) as HTMLElement[];
+
+  // Which scene holds the middle of the screen, how far through it we are,
+  // and how close the next one is (so the shape starts changing before the section does).
+  type View = { scene: number; p: number; blend: number };
+  const read = (): View => {
+    const mid = innerHeight * 0.5, lead = innerHeight * 0.4;
+    const tops = sections.map((s) => s.getBoundingClientRect().top);
+    let i = 0;
+    tops.forEach((t, k) => { if (t <= mid) i = k; });
+    const end = i + 1 < tops.length ? tops[i + 1] : sections[i].getBoundingClientRect().bottom;
+    const p = Math.min(1, Math.max(0, (mid - tops[i]) / Math.max(1, end - tops[i])));
+    const blend = i + 1 < tops.length ? Math.min(1, Math.max(0, (mid + lead - tops[i + 1]) / lead)) : 0;
+    return { scene: SCENES.indexOf(sections[i].dataset.scene!), p, blend };
+  };
+
+  let field: { setView(s: number, p: number, b: number): void; resize(): void; burst(strength?: number): void; start(): void; draw(): void } | null = null;
+  const onScroll = () => {
+    const v = read();
+    root.classList.toggle('away', v.scene > 0 && v.scene < 4);
+    field?.setView(v.scene, v.p, v.blend);
+  };
+  addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // The page can ask for a small burst (for example when the email is copied).
+  document.addEventListener('field:burst', () => field?.burst());
+
+  const hasWebGL = (() => {
+    try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; }
+  })();
+
+  // Load Three.js after first paint, so the words are readable immediately.
+  async function boot() {
+    if (!hasWebGL) { root.classList.add('no-gl'); document.documentElement.classList.add('no-gl'); return; }
+    const font = '"Space Grotesk Variable", "Space Grotesk", sans-serif';
+    const [THREE, { createField }] = await Promise.all([
+      import('../scripts/three-lite'),
+      import('../scripts/field.js'),
+      document.fonts?.load(`700 200px ${font}`).catch(() => null), // the </> and @ shapes are drawn in this face
+    ]);
+    field = createField({ THREE, canvas, reducedMotion, font });
+    onScroll();
+    addEventListener('resize', () => field!.resize());
+    if (reducedMotion) field.draw();
+    else field.start();
+  }
+  revealAfter(boot);
+</script>
