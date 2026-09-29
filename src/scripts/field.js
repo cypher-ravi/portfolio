@@ -8,14 +8,14 @@ import { sphere, text, cards, brain } from './scenes/shapes.js';
 export const SCENES = ['hero', 'experience', 'projects', 'ai', 'contact'];
 
 // Pose per scene: x, y as fractions of the half-view (+x right, +y up), s scale, o opacity.
-const WIDE = {
+export const WIDE = {
   hero: { x: 0.5, y: 0, s: 1, o: 1 },
   experience: { x: -0.54, y: 0.06, s: 0.8, o: 1 },
   projects: { x: 0.8, y: -0.66, s: 0.36, o: 0.55 },
   ai: { x: 0.55, y: 0, s: 0.95, o: 1 },
   contact: { x: 0.52, y: 0, s: 1, o: 1 },
 };
-const NARROW = {
+export const NARROW = {
   hero: { x: 0, y: 0.4, s: 0.66, o: 1 },
   experience: { x: 0.3, y: 0.1, s: 0.8, o: 0.16 },
   projects: { x: 0.3, y: 0.3, s: 0.6, o: 0.1 },
@@ -25,7 +25,7 @@ const NARROW = {
 const KEYS = ['x', 'y', 's', 'o'];
 
 // Two colours per scene; particles mix between them by height. The first is always close to the site accent.
-const PALETTE = [
+export const PALETTE = [
   [0x9ab8ff, 0xd9c8ff],
   [0x8fe8d0, 0x9ab8ff],
   [0x9ab8ff, 0xffc2a8],
@@ -33,7 +33,7 @@ const PALETTE = [
   [0x9ab8ff, 0xf3e6c8],
 ];
 
-const MODEL_H = 3.8, MODEL_W = 4.8; // rough bounds of the shapes
+export const MODEL_H = 3.8, MODEL_W = 4.8; // rough bounds of the shapes
 const smooth = (t) => t * t * (3 - 2 * t);
 
 /**

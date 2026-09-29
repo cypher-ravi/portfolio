@@ -70,44 +70,59 @@ const dots = Array.from({ length: 420 }, (_, i) => {
     try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; }
   })();
 
-  // Without a working 3D view, show the still dots instead of an empty space.
+  // When nothing can draw, show the still dots instead of an empty space.
   const fallback = (on = true) => {
     root.classList.toggle('no-gl', on);
     document.documentElement.classList.toggle('no-gl', on);
   };
 
-  // Load Three.js after first paint, so the words are readable immediately.
-  async function boot() {
-    if (!hasWebGL) return fallback();
-    const font = '"Space Grotesk Variable", "Space Grotesk", sans-serif';
-    const [THREE, { createField }] = await Promise.all([
-      import('../scripts/three-lite'),
-      import('../scripts/field.js'),
-      document.fonts?.load(`700 200px ${font}`).catch(() => null), // the </> and @ shapes are drawn in this face
-    ]);
-    field = createField({ THREE, canvas, reducedMotion, font });
+  const font = '"Space Grotesk Variable", "Space Grotesk", sans-serif';
+  const fontReady = () => document.fonts?.load(`700 200px ${font}`).catch(() => null); // the </> and @ shapes are drawn in this face
+
+  function run(f: NonNullable<typeof field>) {
+    field = f;
     onScroll();
-    addEventListener('resize', () => field!.resize());
+    addEventListener('resize', () => f.resize());
+    if (reducedMotion) f.draw();
+    else f.start();
+  }
+
+  // Load Three.js after first paint, so the words are readable immediately.
+  async function boot3d() {
+    if (!hasWebGL) throw new Error('WebGL 2 is not available');
+    const [THREE, { createField }] = await Promise.all([import('../scripts/three-lite'), import('../scripts/field.js'), fontReady()]);
+    run(createField({ THREE, canvas, reducedMotion, font }));
     // Phones can drop the GPU context (for example after the tab sleeps); show the dots until it returns.
     canvas.addEventListener('webglcontextlost', () => fallback());
     canvas.addEventListener('webglcontextrestored', () => { fallback(false); field!.draw(); });
-    if (reducedMotion) field.draw();
-    else field.start();
+  }
+
+  // Without WebGL (Chrome with graphics acceleration off, for one), draw the same field on a 2D canvas.
+  async function boot2d() {
+    const [{ createField2D }] = await Promise.all([import('../scripts/field2d.js'), fontReady()]);
+    const fresh = canvas.cloneNode() as HTMLCanvasElement; // a canvas keeps the first context type it was asked for
+    canvas.replaceWith(fresh);
+    run(createField2D({ canvas: fresh, reducedMotion, font }));
   }
 
   revealAfter(() =>
-    boot().catch((err) => {
-      console.warn('3D view unavailable', err);
-      // A page kept open across a deploy asks for script files that no longer exist. Reload once for the new ones.
-      const stale = /dynamically imported module|Importing a module script failed|error loading dynamically imported module/i.test(String(err?.message));
-      try {
-        if (stale && !sessionStorage.getItem('field-reloaded')) {
-          sessionStorage.setItem('field-reloaded', '1');
-          location.reload();
-          return;
-        }
-      } catch {}
-      fallback();
-    }),
+    boot3d()
+      .catch((err) => {
+        console.info('3D view unavailable, using the 2D field', err);
+        // A page kept open across a deploy asks for script files that no longer exist. Reload once for the new ones.
+        const stale = /dynamically imported module|Importing a module script failed|error loading dynamically imported module/i.test(String(err?.message));
+        try {
+          if (stale && !sessionStorage.getItem('field-reloaded')) {
+            sessionStorage.setItem('field-reloaded', '1');
+            location.reload();
+            return;
+          }
+        } catch {}
+        return boot2d();
+      })
+      .catch((err) => {
+        console.warn('Particle field unavailable', err);
+        fallback();
+      }),
   );
 </script>
