@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import Field from '../components/Field.astro';
 import { profile, glance, experience, education, projects, principles } from '../data/profile';
+import { roadmaps } from '../data/roadmaps';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 // Told oldest first, from 2020 to now.
@@ -21,6 +22,7 @@ const roles = [...experience].reverse();
         <a href="#experience" data-nav>Experience</a>
         <a href="#projects" data-nav>Projects</a>
         <a href="#ai" data-nav class="opt">AI</a>
+        <a href="#learning" data-nav class="opt">Learning</a>
         <a href="#contact" data-nav>Contact</a>
         <a class="nav-cta" href={profile.links.resume}>Resume</a>
       </nav>
@@ -152,6 +154,48 @@ const roles = [...experience].reverse();
         </ol>
       </section>
 
+      <section id="learning" class="block learning">
+        <header class="head">
+          <p class="label" data-reveal>Learning in public</p>
+          <h2 data-split>Still <em>growing</em></h2>
+          <p class="lede" data-reveal>Two roadmaps I'm working through now: what I'm learning, how, and where I am.</p>
+        </header>
+        <div class="tracks" role="tablist" aria-label="Roadmaps" data-reveal>
+          {roadmaps.map((r, i) => (
+            <button type="button" role="tab" id={`tab-${r.id}`} aria-controls={`road-${r.id}`} aria-selected={i === 0 ? 'true' : 'false'}>{r.name}</button>
+          ))}
+        </div>
+        {roadmaps.map((r) => {
+          const at = Math.max(0, r.stages.findIndex((s) => s.id === r.now));
+          return (
+            <div class="roadmap" id={`road-${r.id}`} role="tabpanel" aria-labelledby={`tab-${r.id}`}>
+              <div class="road-head" data-reveal>
+                <p class="road-name">{r.name}</p>
+                <p class="road-why">{r.why}</p>
+                <div class="meter" aria-label={`Stage ${at + 1} of ${r.stages.length}`}>
+                  {r.stages.map((_, k) => <i class={k < at ? 'done' : k === at ? 'now' : ''} />)}
+                </div>
+                <p class="label">Stage {pad(at + 1)} of {pad(r.stages.length)} · updated {r.updated}</p>
+              </div>
+              <ol class="road">
+                {r.stages.map((s, k) => {
+                  const state = k < at ? 'done' : k === at ? 'now' : 'next';
+                  return (
+                    <li class={`stage ${state}`} data-reveal>
+                      <p class="period">{pad(k + 1)} · {state === 'done' ? 'Done' : state === 'now' ? 'You are here' : 'Next'}</p>
+                      <h3>{s.title}</h3>
+                      {state === 'now' && <p class="now-note">{r.nowNote}</p>}
+                      <ul class="tags">{s.learn.map((t) => <li>{t}</li>)}</ul>
+                      <p class="how"><span class="label">How</span> {s.how}</p>
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
+          );
+        })}
+      </section>
+
       <section id="contact" class="block contact" data-scene="contact">
         <header class="head">
           <p class="label" data-reveal>Contact</p>
@@ -179,6 +223,27 @@ const roles = [...experience].reverse();
 </Base>
 
 <script>
+  // Roadmaps: show one track at a time. Without JS both stay visible.
+  const tabs = [...document.querySelectorAll<HTMLButtonElement>('.tracks [role="tab"]')];
+  const pick = (tab: HTMLButtonElement) => {
+    for (const t of tabs) {
+      const on = t === tab;
+      t.setAttribute('aria-selected', String(on));
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute('aria-controls')!)!.hidden = !on;
+    }
+  };
+  tabs.forEach((t, i) => {
+    t.addEventListener('click', () => pick(t));
+    t.addEventListener('keydown', (e) => {
+      const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+      if (!d) return;
+      const next = tabs[(i + d + tabs.length) % tabs.length];
+      pick(next); next.focus();
+    });
+  });
+  if (tabs[0]) pick(tabs[0]);
+
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const clamp = (v: number) => Math.min(1, Math.max(0, v));
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -470,6 +535,41 @@ const roles = [...experience].reverse();
   .p-title { grid-column: 2; font: 600 clamp(1.3rem, 2.2vw, 1.6rem)/1.25 var(--display); letter-spacing: -0.02em; }
   .p-body { grid-column: 2; color: var(--muted); }
 
+  /* Learning in public: one roadmap at a time, a rail of stages with a "you are here" marker. */
+  .learning .lede { max-width: 52ch; }
+  .tracks { display: flex; gap: 8px; }
+  .tracks button {
+    font: 500 0.9rem var(--sans); padding: 9px 18px; border-radius: 999px; cursor: pointer;
+    border: 1px solid var(--line); background: none; color: var(--muted); transition: border-color 0.3s, color 0.3s, background 0.3s;
+  }
+  .tracks button:hover { color: var(--text); }
+  .tracks button[aria-selected='true'] { color: var(--bg); background: var(--text); border-color: var(--text); }
+  .roadmap { display: grid; gap: 40px; max-width: 600px; }
+  .roadmap[hidden] { display: none; }
+  .road-head { display: grid; gap: 12px; }
+  .road-name { font: 700 clamp(1.6rem, 3vw, 2.1rem)/1.1 var(--display); letter-spacing: -0.03em; }
+  .road-why { color: var(--muted); }
+  .meter { display: flex; gap: 6px; margin-top: 6px; }
+  .meter i { flex: 1; height: 4px; border-radius: 2px; background: var(--line); }
+  .meter i.done { background: color-mix(in srgb, var(--accent) 55%, var(--line)); }
+  .meter i.now { background: var(--accent); box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 60%, transparent); }
+  .road { list-style: none; margin: 0; padding: 0 0 0 36px; display: grid; gap: 44px; position: relative; }
+  .road::before { content: ''; position: absolute; left: 4px; top: 10px; bottom: 10px; width: 1px; background: var(--line); }
+  .stage { position: relative; display: grid; gap: 12px; }
+  .stage::before {
+    content: ''; position: absolute; left: -36px; top: 5px; width: 9px; height: 9px; border-radius: 50%;
+    border: 1px solid var(--muted); background: var(--bg);
+  }
+  .stage.done::before { background: color-mix(in srgb, var(--accent) 55%, var(--bg)); border-color: transparent; }
+  .stage.now::before { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent); animation: beat 2.4s var(--ease) infinite; }
+  @keyframes beat { 50% { box-shadow: 0 0 0 9px color-mix(in srgb, var(--accent) 0%, transparent); } }
+  .stage.next { opacity: 0.55; }
+  .stage.now .period { color: var(--accent); }
+  .stage h3 { font: 600 clamp(1.2rem, 2vw, 1.45rem)/1.25 var(--display); letter-spacing: -0.02em; }
+  .now-note { color: var(--text); padding: 12px 14px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line)); background: color-mix(in srgb, var(--accent) 7%, transparent); }
+  .how { color: var(--muted); font-size: 0.95rem; }
+  .how .label { margin-right: 6px; }
+
   /* Contact */
   .contact { gap: 30px; }
   .contact h2 { font-size: clamp(3rem, 7vw, 5.6rem); }
@@ -510,6 +610,6 @@ const roles = [...experience].reverse();
     .works-head { flex-direction: column; align-items: start; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .scroll i::after, .arrow { animation: none; }
+    .scroll i::after, .arrow, .stage.now::before { animation: none; }
   }
 </style>
