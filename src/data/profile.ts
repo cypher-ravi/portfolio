@@ -77,6 +77,25 @@ export type Project = {
 // Shown as a sideways row of cards; each opens a detail popup.
 export const projects: Project[] = [
   {
+    name: 'Samskara',
+    kind: 'Shipped',
+    theme: 'Mind',
+    year: '2026',
+    tldr: 'A private self-reflection tool for the beliefs you were handed, and which ones you still choose.',
+    stack: ['SvelteKit', 'TypeScript', 'SQLite WASM', 'OPFS'],
+    points: [
+      'Sort 66 beliefs across ten areas of life: how much each one steers you, where it came from, and whether you keep it.',
+      'Your answers grow into a roots map: sources are roots, kept beliefs are leaves, and each dropped one gets a rewrite and a small experiment for the week.',
+      'Local-first with no backend: SQLite compiled to WebAssembly runs in a Web Worker and stores data in the browser’s private file system, with export and import.',
+      'The deck adapts: beliefs that share a deeper theme with your strongest answers come sooner.',
+    ],
+    status: 'Live',
+    links: [
+      { label: 'Open the app', href: 'https://cypher-ravi.github.io/Samskara/' },
+      { label: 'Source', href: 'https://github.com/cypher-ravi/Samskara' },
+    ],
+  },
+  {
     name: 'Under the Hood',
     kind: 'Shipped',
     theme: 'Systems',
