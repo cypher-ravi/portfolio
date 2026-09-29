@@ -70,9 +70,15 @@ const dots = Array.from({ length: 420 }, (_, i) => {
     try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; }
   })();
 
+  // Without a working 3D view, show the still dots instead of an empty space.
+  const fallback = (on = true) => {
+    root.classList.toggle('no-gl', on);
+    document.documentElement.classList.toggle('no-gl', on);
+  };
+
   // Load Three.js after first paint, so the words are readable immediately.
   async function boot() {
-    if (!hasWebGL) { root.classList.add('no-gl'); document.documentElement.classList.add('no-gl'); return; }
+    if (!hasWebGL) return fallback();
     const font = '"Space Grotesk Variable", "Space Grotesk", sans-serif';
     const [THREE, { createField }] = await Promise.all([
       import('../scripts/three-lite'),
@@ -82,8 +88,26 @@ const dots = Array.from({ length: 420 }, (_, i) => {
     field = createField({ THREE, canvas, reducedMotion, font });
     onScroll();
     addEventListener('resize', () => field!.resize());
+    // Phones can drop the GPU context (for example after the tab sleeps); show the dots until it returns.
+    canvas.addEventListener('webglcontextlost', () => fallback());
+    canvas.addEventListener('webglcontextrestored', () => { fallback(false); field!.draw(); });
     if (reducedMotion) field.draw();
     else field.start();
   }
-  revealAfter(boot);
+
+  revealAfter(() =>
+    boot().catch((err) => {
+      console.warn('3D view unavailable', err);
+      // A page kept open across a deploy asks for script files that no longer exist. Reload once for the new ones.
+      const stale = /dynamically imported module|Importing a module script failed|error loading dynamically imported module/i.test(String(err?.message));
+      try {
+        if (stale && !sessionStorage.getItem('field-reloaded')) {
+          sessionStorage.setItem('field-reloaded', '1');
+          location.reload();
+          return;
+        }
+      } catch {}
+      fallback();
+    }),
+  );
 </script>
