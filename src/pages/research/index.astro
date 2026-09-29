@@ -1,0 +1,56 @@
+---
+import Page from '../../layouts/Page.astro';
+import { getCollection } from 'astro:content';
+import { profile } from '../../data/profile';
+
+const home = import.meta.env.BASE_URL.replace(/\/$/, '');
+const entries = (await getCollection('research')).sort((a, b) => a.data.order - b.data.order);
+---
+<Page title={`Research · ${profile.name}`} description="Research projects, documented as they happen." current="research">
+  <header class="head">
+    <p class="label" data-reveal>Research</p>
+    <h1 data-split>Open questions, <em>worked in public</em></h1>
+    <p class="lede" data-reveal>Longer projects where the answer isn't known yet. Each one has its question, method, progress and what I've learned so far.</p>
+  </header>
+
+  <ul class="list">
+    {entries.map((e) => {
+      const done = e.data.phases.filter((p) => p.state === 'done').length;
+      return (
+        <li data-reveal>
+          <a class="item" href={`${home}/research/${e.id}/`}>
+            <p class="label">{e.data.field} · <b>{e.data.status}</b></p>
+            <h2>{e.data.title}</h2>
+            <p class="sum">{e.data.summary}</p>
+            {e.data.phases.length > 0 && (
+              <div class="meter" aria-label={`${done} of ${e.data.phases.length} phases done`}>
+                {e.data.phases.map((p) => <i class={p.state} />)}
+              </div>
+            )}
+            <p class="foot-row"><span class="label">Updated {e.data.updated}</span><span class="go">Read the write-up <span aria-hidden="true">→</span></span></p>
+          </a>
+        </li>
+      );
+    })}
+  </ul>
+</Page>
+
+<style>
+  .head { display: grid; gap: 18px; margin-bottom: 64px; }
+  h1 { font-size: clamp(2.6rem, 6vw, 4.6rem); }
+  .lede { font-size: 1.12rem; color: var(--muted); max-width: 56ch; }
+  .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 20px; }
+  .item {
+    display: grid; gap: 14px; padding: 30px; border-radius: 20px; text-decoration: none;
+    border: 1px solid var(--line); background: var(--surface); transition: border-color 0.4s var(--ease), transform 0.4s var(--ease);
+  }
+  .item:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); transform: translateY(-3px); }
+  .item h2 { font-size: clamp(1.8rem, 3.4vw, 2.5rem); }
+  .sum { color: var(--muted); font-size: 1.05rem; }
+  .meter { display: flex; gap: 6px; max-width: 420px; }
+  .meter i { flex: 1; height: 4px; border-radius: 2px; background: var(--line); }
+  .meter i.done { background: color-mix(in srgb, var(--accent) 55%, var(--line)); }
+  .meter i.now { background: var(--accent); box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 60%, transparent); }
+  .foot-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; max-width: none; padding-top: 14px; border-top: 1px solid var(--line); }
+  .go { color: var(--accent); font-weight: 500; }
+</style>
