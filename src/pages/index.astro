@@ -124,6 +124,13 @@ const roles = [...experience].reverse();
           <p class="tldr">{x.tldr}</p>
           <ul class="points">{x.points.map((p) => <li>{p}</li>)}</ul>
           <ul class="tags">{x.stack.map((s) => <li>{s}</li>)}</ul>
+          {x.links && (
+            <div class="detail-links">
+              {x.links.map((l, j) => (
+                <a class={j === 0 ? 'btn primary' : 'btn'} href={l.href} target="_blank" rel="noopener">{l.label}</a>
+              ))}
+            </div>
+          )}
         </div>
       </dialog>
     ))}
@@ -444,6 +451,7 @@ const roles = [...experience].reverse();
   .detail-in { display: grid; gap: 18px; padding: 30px; }
   .detail h3 { font: 700 2rem/1.1 var(--display); letter-spacing: -0.03em; }
   .detail .tldr { font-size: 1.08rem; }
+  .detail-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
   .close {
     width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; line-height: 1;
     border: 1px solid var(--line); background: none; color: var(--muted);
