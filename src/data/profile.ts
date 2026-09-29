@@ -71,10 +71,29 @@ export type Project = {
   stack: string[];
   points: string[];
   status?: 'Coming soon' | 'Building' | 'Live';
+  links?: { label: string; href: string }[];
 };
 
 // Shown as a sideways row of cards; each opens a detail popup.
 export const projects: Project[] = [
+  {
+    name: 'Under the Hood',
+    kind: 'Shipped',
+    theme: 'Systems',
+    year: '2026',
+    tldr: 'Interactive simulations of the algorithms behind distributed systems.',
+    stack: ['JavaScript', 'SVG', 'GitHub Pages'],
+    points: [
+      'Consistent hashing: add or remove servers and compare how many keys move against plain hash mod N.',
+      'Raft consensus: five simulated servers elect a leader and replicate a log. Crash any of them and watch it recover.',
+      'Each topic runs the real algorithm, not a scripted animation. No build step and no dependencies.',
+    ],
+    status: 'Live',
+    links: [
+      { label: 'Open the site', href: 'https://cypher-ravi.github.io/under-the-hood/' },
+      { label: 'Source', href: 'https://github.com/cypher-ravi/under-the-hood' },
+    ],
+  },
   {
     name: 'Site chatbot',
     kind: 'Shipped',
