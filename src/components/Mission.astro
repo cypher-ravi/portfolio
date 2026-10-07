@@ -1,0 +1,142 @@
+---
+// Mission Ravi-1: one fixed canvas behind the page. The hero shows the rocket on the pad, and the
+// mission chapters ([data-mission-track]) fly it: each spent stage separates in vacuum, the payload
+// coasts on. Decoration only: every word stays in the HTML chapters.
+import { legs, partLabels } from '../data/mission';
+
+const N = legs.length;
+const at = (id: string) => legs.findIndex((l) => l.id === id);
+const events = {
+  sep1: (at('separation') + 0.3) / N,
+  fair: (at('fairing') + 0.35) / N,
+  sep2: (at('payload') - 0.12) / N,
+  arr0: (at('arrays') + 0.05) / N,
+  arr1: (at('arrays') + 0.6) / N,
+  wide: at('trajectory') / N,
+};
+---
+<div class="mission" id="mission" aria-hidden="true" data-events={JSON.stringify(events)} data-names={JSON.stringify(partLabels)}>
+  <canvas id="mission-gl"></canvas>
+  <div class="m-labels" id="mission-labels"></div>
+  <dl class="m-hud" id="mission-hud">
+    <div><dt>T+</dt><dd id="hud-t">00:00</dd></div>
+    <div><dt>Altitude</dt><dd><span id="hud-a">0</span><small>km</small></dd></div>
+    <div><dt>Velocity</dt><dd><span id="hud-v">0.0</span><small>km/s</small></dd></div>
+  </dl>
+</div>
+
+<style>
+  .mission { position: fixed; inset: 0; z-index: 0; pointer-events: none; background: #010204; }
+  #mission-gl { display: block; width: 100%; height: 100%; opacity: 0; transition: opacity 1.2s var(--ease); }
+  #mission-gl.on { opacity: 1; }
+  .m-labels { position: absolute; inset: 0; overflow: hidden; }
+  :global(.m-label) {
+    position: absolute; left: 0; top: 0; opacity: 0; white-space: nowrap;
+    font: 400 0.72rem/1 var(--mono); letter-spacing: 0.06em; color: var(--text);
+    padding: 6px 9px; border-radius: 6px; background: color-mix(in srgb, #05070a 62%, transparent); backdrop-filter: blur(6px);
+    transition: opacity 0.35s;
+  }
+  :global(.m-label)::before { content: ''; position: absolute; left: -14px; top: 50%; width: 12px; height: 1px; background: var(--flame); }
+  :global(.m-label b) { font-weight: 400; color: var(--flame); text-transform: uppercase; }
+  .m-hud {
+    position: absolute; right: 24px; bottom: 24px; margin: 0; display: grid; grid-template-columns: repeat(3, auto); gap: 22px;
+    font-family: var(--mono); text-align: right; opacity: 0; transition: opacity 0.5s;
+  }
+  .m-hud.on { opacity: 1; }
+  .m-hud dt { font-size: 0.62rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+  .m-hud dd { margin: 4px 0 0; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+  .m-hud small { font-size: 0.68rem; color: var(--muted); margin-left: 3px; }
+  @media (max-width: 760px) {
+    .m-hud { right: 12px; top: 64px; bottom: auto; gap: 12px; padding: 8px 12px; border-radius: 10px; background: color-mix(in srgb, #05070a 70%, transparent); backdrop-filter: blur(8px); }
+    .m-hud dd { font-size: 0.85rem; }
+    .m-labels { display: none; } /* the chapter cards already name each part */
+  }
+</style>
+
+<script>
+  import { revealAfter } from '../scripts/motion';
+
+  type Flight = { setProgress(p: number, past: boolean): void; resize(): void; start(): void; draw(): void };
+  const root = document.getElementById('mission')!;
+  const canvas = document.getElementById('mission-gl') as HTMLCanvasElement;
+  const labels = document.getElementById('mission-labels')!;
+  const hud = document.getElementById('mission-hud')!;
+  const events = JSON.parse(root.dataset.events!);
+  const names = JSON.parse(root.dataset.names!);
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const track = document.querySelector<HTMLElement>('[data-mission-track]');
+
+  // Progress: 0 while the hero shows the pad, 1 at the end of the last chapter.
+  const read = () => {
+    if (!track) return { p: 0, past: false };
+    const r = track.getBoundingClientRect();
+    const p = Math.min(1, Math.max(0, (innerHeight * 0.55 - r.top) / r.height));
+    return { p, past: r.bottom < innerHeight * 0.35 };
+  };
+
+  // Telemetry that roughly follows a real ascent profile.
+  const hT = document.getElementById('hud-t')!, hA = document.getElementById('hud-a')!, hV = document.getElementById('hud-v')!;
+  const telemetry = (p: number, past: boolean) => {
+    hud.classList.toggle('on', p > 0.005 && !past);
+    const t = p * 560, s1 = events.sep1, s2 = events.sep2;
+    const alt = p < s1 ? Math.pow(p / s1, 1.6) * 80 : p < s2 ? 80 + ((p - s1) / (s2 - s1)) * 120 : 200 + ((p - s2) / (1 - s2)) * 1800;
+    const vel = p < s1 ? Math.pow(p / s1, 1.3) * 2.3 : p < s2 ? 2.3 + ((p - s1) / (s2 - s1)) * 5.5 : Math.min(11.2, 7.8 + ((p - s2) / (1 - s2)) * 6);
+    hT.textContent = `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+    hA.textContent = Math.round(alt).toLocaleString('en-US');
+    hV.textContent = vel.toFixed(1);
+  };
+
+  let flight: Flight | null = null;
+  const onScroll = () => {
+    const { p, past } = read();
+    telemetry(p, past);
+    flight?.setProgress(p, past);
+  };
+  addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  function run(f: Flight) {
+    flight = f;
+    onScroll();
+    addEventListener('resize', () => { f.resize(); onScroll(); });
+    if (reducedMotion) f.draw(); else f.start();
+    requestAnimationFrame(() => canvas.classList.add('on'));
+  }
+
+  const hasWebGL = (() => { try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; } })();
+
+  async function boot3d() {
+    if (!hasWebGL) throw new Error('WebGL 2 is not available');
+    const { createMission } = await import('../scripts/mission/scene.js');
+    run(createMission({ canvas, labels, events, names, reducedMotion }));
+    canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); boot2d(); });
+  }
+
+  // Without WebGL (Chrome with graphics acceleration off, for one), fly the same mission in 2D.
+  async function boot2d() {
+    const { createMission2D } = await import('../scripts/mission/mission2d.js');
+    const fresh = canvas.cloneNode() as HTMLCanvasElement; // a canvas keeps the first context type it was asked for
+    canvas.replaceWith(fresh);
+    labels.hidden = true;
+    const f = createMission2D({ canvas: fresh, events, reducedMotion });
+    flight = f;
+    onScroll();
+    addEventListener('resize', () => { f.resize(); onScroll(); });
+    if (reducedMotion) f.draw(); else f.start();
+    requestAnimationFrame(() => fresh.classList.add('on'));
+  }
+
+  revealAfter(() =>
+    boot3d()
+      .catch((err) => {
+        console.info('3D mission unavailable, flying it in 2D', err);
+        // A page kept open across a deploy asks for script files that no longer exist. Reload once for the new ones.
+        const stale = /dynamically imported module|Importing a module script failed/i.test(String(err?.message));
+        try {
+          if (stale && !sessionStorage.getItem('mission-reloaded')) { sessionStorage.setItem('mission-reloaded', '1'); location.reload(); return; }
+        } catch {}
+        return boot2d();
+      })
+      .catch((err) => console.warn('Mission view unavailable', err)),
+  );
+</script>

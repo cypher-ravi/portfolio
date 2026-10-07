@@ -1,4 +1,4 @@
-/* Particle field: a cool dark room, one cloud of light, one accent. */
+/* Mission Ravi-1: deep space, one cool accent, engine light for the flight. */
 :root {
   color-scheme: dark;
   --bg: #0b0c0f;
@@ -7,6 +7,8 @@
   --text: #e9ecf1;
   --muted: #8b93a1;
   --accent: #9ab8ff;
+  --flame: #ffb35c;
+  --cool: #8fd3ff;
 
   --display: 'Space Grotesk Variable', 'Segoe UI', system-ui, sans-serif;
   --sans: 'Space Grotesk Variable', 'Segoe UI', system-ui, sans-serif;

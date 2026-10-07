@@ -1,18 +1,17 @@
 ---
 import Base from '../layouts/Base.astro';
-import Field from '../components/Field.astro';
-import { profile, glance, experience, education, projects, principles } from '../data/profile';
+import Mission from '../components/Mission.astro';
+import { profile, glance, projects, principles } from '../data/profile';
+import { legs } from '../data/mission';
 import { roadmaps } from '../data/roadmaps';
 
 const pad = (n: number) => String(n).padStart(2, '0');
-// Told oldest first, from 2020 to now.
-const roles = [...experience].reverse();
 ---
 <Base
   title={`${profile.name} · ${profile.role}`}
   description={`${profile.name}, ${profile.role}. ${profile.headline.join(' ')}`}
 >
-  <Field />
+  <Mission />
   <a class="skip" href="#main">Skip to content</a>
 
   <header class="bar" id="bar">
@@ -41,7 +40,7 @@ const roles = [...experience].reverse();
           <a class="btn" href={`mailto:${profile.email}`}>Say hello</a>
         </div>
       </div>
-      <p class="hint label" aria-hidden="true">Move to scatter · click to burst</p>
+      <p class="hint label" aria-hidden="true">Mission Ravi-1 · scroll to launch</p>
       <a class="scroll label" href="#glance" aria-label="Scroll to content"><i></i>Scroll</a>
     </section>
 
@@ -54,33 +53,41 @@ const roles = [...experience].reverse();
           </div>
         ))}
       </dl>
-
-      <section id="experience" class="block exp" data-scene="experience">
-        <header class="head">
-          <p class="label" data-reveal>Experience · 2020 to now</p>
-          <h2 data-split>Where I've <em>grown</em></h2>
-        </header>
-        <div class="journey">
-          <aside class="chapter" aria-hidden="true">
-            <span class="ch-count label"><b id="j-num">01</b> / {pad(roles.length)}</span>
-            <span class="ch-period" id="j-period">{roles[0].period}</span>
-            <span class="ch-company" id="j-company">{roles[0].company}</span>
-          </aside>
-          <ol class="timeline" id="timeline">
-            <span class="rail" aria-hidden="true"><i id="rail-fill"></i></span>
-            {roles.map((r, i) => (
-              <li class={i === roles.length - 1 ? 'current' : ''} data-period={r.period} data-company={r.company}>
-                <span class="period">{r.period}</span>
-                <h3>{r.title} <span class="at">at {r.company}</span></h3>
-                <ul class="points">{r.points.map((p) => <li>{p}</li>)}</ul>
-                {r.stack && <ul class="tags">{r.stack.map((s) => <li>{s}</li>)}</ul>}
-              </li>
-            ))}
-          </ol>
-        </div>
-        <p class="edu" data-reveal><span class="label">Education</span> {education}</p>
-      </section>
     </div>
+
+    <section id="experience" class="flight" aria-labelledby="flight-title">
+      <header class="wrap head flight-head">
+        <p class="label" data-reveal>Experience · 2020 to now</p>
+        <h2 id="flight-title" data-split>Mission <em>Ravi-1</em></h2>
+        <p class="lede" data-reveal>Every stage of my career did its job, then let go. What it gave me kept flying.</p>
+      </header>
+      <ol class="legs" data-mission-track>
+        {legs.map((l, i) => (
+          <li class="leg" id={`leg-${l.id}`}>
+            <div class="wrap">
+              <article class="leg-card">
+                <p class="label"><b>{pad(i + 1)}</b> · {l.phase}</p>
+                <h3>{l.title}</h3>
+                {l.period && <p class="period">{l.period}</p>}
+                <ul class="points">{l.points.map((x) => <li>{x}</li>)}</ul>
+                {l.kept && (
+                  <div class="kept">
+                    <span class="label">Still on board</span>
+                    <ul class="tags">{l.kept.map((k) => <li>{k}</li>)}</ul>
+                  </div>
+                )}
+                {l.id === 'trajectory' && (
+                  <div class="ctas">
+                    <a class="btn primary" href="#contact">Start a conversation</a>
+                    <a class="btn" href={profile.links.resume}>Resume</a>
+                  </div>
+                )}
+              </article>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
 
     <section id="projects" class="works" aria-labelledby="works-title" data-scene="projects">
       <div class="works-pin">
@@ -249,14 +256,13 @@ const roles = [...experience].reverse();
   const clamp = (v: number) => Math.min(1, Math.max(0, v));
   const pad = (n: number) => String(n).padStart(2, '0');
 
-  // Copy email: a short confirmation (and a small burst of particles), or select the text as a fallback.
+  // Copy email: a short confirmation, or select the text as a fallback.
   const btn = document.getElementById('copy-email') as HTMLButtonElement;
   const email = document.getElementById('email')!;
   btn.addEventListener('click', async () => {
     try {
       await navigator.clipboard.writeText(email.textContent ?? '');
       btn.textContent = 'Copied';
-      document.dispatchEvent(new Event('field:burst'));
     } catch {
       const r = document.createRange();
       r.selectNodeContents(email);
@@ -283,28 +289,6 @@ const roles = [...experience].reverse();
   links.forEach((_, id) => { const el = document.getElementById(id); if (el) spy.observe(el); });
   spy.observe(document.getElementById('top')!);
 
-  // Journey: the rail fills as you scroll, and the chapter label follows the role in view.
-  const timeline = document.getElementById('timeline')!;
-  const fill = document.getElementById('rail-fill')!;
-  const roles = [...timeline.querySelectorAll<HTMLLIElement>(':scope > li')];
-  const jNum = document.getElementById('j-num')!;
-  const jPeriod = document.getElementById('j-period')!;
-  const jCompany = document.getElementById('j-company')!;
-  let activeRole = -1;
-  const setRole = (i: number) => {
-    if (i === activeRole) return;
-    const first = activeRole < 0;
-    activeRole = i;
-    const li = roles[i];
-    roles.forEach((r, k) => r.classList.toggle('on', k === i));
-    jNum.textContent = pad(i + 1);
-    jPeriod.textContent = li.dataset.period ?? '';
-    jCompany.textContent = li.dataset.company ?? '';
-    if (!first && !reduced) {
-      for (const el of [jPeriod, jCompany]) el.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 600, easing: 'cubic-bezier(.22,1,.36,1)' });
-    }
-  };
-
   // Projects: on wide screens the section pins and the cards slide sideways as you scroll down.
   const works = document.getElementById('projects')!;
   const view = document.getElementById('cards-view')!;
@@ -321,12 +305,6 @@ const roles = [...experience].reverse();
     works.style.height = pin ? `${innerHeight + dist}px` : '';
   };
   const onScroll = () => {
-    const t = timeline.getBoundingClientRect();
-    fill.style.transform = `scaleY(${clamp((innerHeight * 0.55 - t.top) / t.height).toFixed(3)})`;
-    let i = 0;
-    roles.forEach((r, k) => { if (r.getBoundingClientRect().top < innerHeight * 0.55) i = k; });
-    setRole(i);
-
     if (works.classList.contains('pinned')) {
       const p = clamp(-works.getBoundingClientRect().top / (dist || 1));
       cards.style.transform = `translate3d(${(-p * dist).toFixed(1)}px,0,0)`;
@@ -408,7 +386,7 @@ const roles = [...experience].reverse();
 
   .ctas { display: flex; flex-wrap: wrap; gap: 12px; }
 
-  /* Hero: words on the left, the particle field on the right. */
+  /* Hero: words on the left, the rocket on the pad to the right. */
   .hero {
     min-height: calc(100vh - 70px); min-height: calc(100svh - 70px);
     display: flex; flex-direction: column; justify-content: center;
@@ -444,26 +422,24 @@ const roles = [...experience].reverse();
   .tags { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; }
   .tags li { font: 450 0.76rem/1 var(--sans); padding: 7px 11px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); }
 
-  /* Experience: the particles form </> in the left column; the chapter in view sits beneath it. */
-  .journey { display: grid; grid-template-columns: 1fr 1.25fr; gap: 56px; align-items: start; }
-  .chapter { position: sticky; top: calc(100vh - 190px); top: calc(100svh - 190px); display: grid; gap: 6px; justify-items: center; text-align: center; }
-  .ch-period { font: 700 1.8rem/1 var(--display); letter-spacing: -0.03em; color: var(--accent); }
-  .ch-company { font-size: 0.95rem; color: var(--muted); }
-  .timeline { list-style: none; margin: 0; padding: 0 0 0 36px; display: grid; gap: 64px; position: relative; }
-  .rail { position: absolute; left: 4px; top: 10px; bottom: 10px; width: 1px; background: var(--line); }
-  .rail i { position: absolute; inset: 0; transform-origin: top; transform: scaleY(0); background: var(--accent); }
-  .timeline > li { position: relative; display: grid; gap: 14px; opacity: 0.4; transition: opacity 0.7s var(--ease); }
-  .timeline > li.on { opacity: 1; }
-  .timeline > li::before {
-    content: ''; position: absolute; left: -36px; top: 6px; width: 9px; height: 9px; border-radius: 50%;
-    background: var(--bg); border: 1px solid var(--muted); transition: background 0.5s, border-color 0.5s;
-  }
-  .timeline > li.on::before { background: var(--accent); border-color: var(--accent); }
-  .timeline h3 { font: 600 clamp(1.3rem, 2.2vw, 1.65rem)/1.2 var(--display); letter-spacing: -0.02em; }
   .period { font: 500 0.78rem var(--sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-variant-numeric: tabular-nums; }
-  .current .period { color: var(--accent); }
-  .at { color: var(--muted); font-weight: 400; }
-  .edu { max-width: none; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; color: var(--muted); padding-top: 26px; border-top: 1px solid var(--line); }
+
+  /* Experience: Mission Ravi-1. Each leg is one screen tall; the card sits left of the ship. */
+  .flight { position: relative; z-index: 1; padding-top: 160px; }
+  .flight-head { display: grid; gap: 16px; }
+  .legs { list-style: none; margin: 0; padding: 0; }
+  .leg { min-height: 100vh; min-height: 100svh; display: flex; align-items: center; }
+  .leg > .wrap { width: 100%; }
+  .leg-card {
+    max-width: 440px; display: grid; gap: 14px; padding: 26px 28px; border-radius: 18px;
+    background: color-mix(in srgb, var(--bg) 68%, transparent); border: 1px solid var(--line);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  }
+  .leg-card .label b { color: var(--flame); }
+  .leg-card h3 { font: 600 clamp(1.35rem, 2.3vw, 1.75rem)/1.2 var(--display); letter-spacing: -0.02em; }
+  .leg-card .period { color: var(--flame); }
+  .kept { display: grid; gap: 10px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .kept .tags li { border-color: color-mix(in srgb, var(--cool) 40%, var(--line)); color: var(--cool); }
 
   /* Projects: a full-width band; cards slide sideways. */
   .works { position: relative; margin: 180px -20px 0; padding-block: 90px; z-index: 1; }
@@ -524,7 +500,7 @@ const roles = [...experience].reverse();
   }
   .close:hover { color: var(--text); border-color: var(--muted); }
 
-  /* AI: three principles on the left; the particles form a brain on the right. */
+  /* AI: three principles in one column. */
   .principles { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; max-width: 560px; }
   .principles li {
     display: grid; grid-template-columns: 44px 1fr; gap: 6px 12px; padding-block: 26px;
@@ -589,13 +565,10 @@ const roles = [...experience].reverse();
 
   @media (max-width: 900px) {
     .glance { grid-template-columns: repeat(2, 1fr); gap: 28px 24px; }
-    .journey { grid-template-columns: 1fr; }
-    .chapter { display: none; }
-    .timeline > li { opacity: 1; }
     .hint { display: none; }
   }
   @media (max-width: 760px) {
-    /* On phones the particles sit above the headline. */
+    /* On phones the rocket stands above the headline. */
     .hero { justify-content: flex-end; padding-top: 44vh; padding-top: 44svh; min-height: 100vh; min-height: 100svh; margin-top: -70px; }
     .hero-copy { gap: 22px; }
     .scroll { display: none; }
@@ -609,6 +582,11 @@ const roles = [...experience].reverse();
     .glance { grid-template-columns: 1fr; }
     .works { margin-top: 120px; padding-block: 60px; }
     .works-head { flex-direction: column; align-items: start; }
+  }
+  @media (max-width: 760px) {
+    .hero-copy { padding: 20px; margin-inline: -8px; border-radius: 18px; background: color-mix(in srgb, var(--bg) 62%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+    .leg { align-items: flex-end; padding-bottom: 28px; }
+    .leg-card { padding: 20px; }
   }
   @media (prefers-reduced-motion: reduce) {
     .scroll i::after, .arrow, .stage.now::before { animation: none; }
