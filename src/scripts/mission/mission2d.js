@@ -43,7 +43,8 @@ export function createMission2D({ canvas, events: ev, reducedMotion }) {
     dim += (dimTarget - dim) * 0.06;
     ctx.fillStyle = '#020305'; ctx.fillRect(0, 0, W, H);
     for (const s of stars) {
-      ctx.fillStyle = `rgba(235,240,255,${0.2 + 0.6 * s[2] * s[2]})`;
+      const twinkle = reducedMotion ? 1 : 0.75 + 0.25 * Math.sin(time * (1 + s[2] * 2) + s[0] * 60);
+      ctx.fillStyle = `rgba(235,240,255,${(0.2 + 0.6 * s[2] * s[2]) * twinkle})`;
       ctx.fillRect(s[0] * W, (s[1] * H + p * 500 * s[2]) % H, s[2] > 0.9 ? 2 : 1.2, s[2] > 0.9 ? 2 : 1.2);
     }
     // Earth drops away below.

@@ -56,7 +56,7 @@ const events = {
 <script>
   import { revealAfter } from '../scripts/motion';
 
-  type Flight = { setProgress(p: number, past: boolean): void; resize(): void; start(): void; draw(): void };
+  type Flight = { setProgress(p: number, past: boolean): void; resize(): void; start(): void; draw(): void; stop?(): void };
   const root = document.getElementById('mission')!;
   const canvas = document.getElementById('mission-gl') as HTMLCanvasElement;
   const labels = document.getElementById('mission-labels')!;
@@ -95,35 +95,69 @@ const events = {
   addEventListener('scroll', onScroll, { passive: true });
   onScroll();
 
-  function run(f: Flight) {
+  addEventListener('resize', () => { flight?.resize(); onScroll(); });
+
+  function run(f: Flight, el: HTMLCanvasElement) {
     flight = f;
     onScroll();
-    addEventListener('resize', () => { f.resize(); onScroll(); });
     if (reducedMotion) f.draw(); else f.start();
-    requestAnimationFrame(() => canvas.classList.add('on'));
+    requestAnimationFrame(() => el.classList.add('on'));
   }
 
-  const hasWebGL = (() => { try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; } })();
+  // WebGL 2 on a real GPU. A software renderer (Chrome with graphics acceleration off or a blocklisted GPU)
+  // draws this scene at a frame or two a second, which reads as frozen, so it gets the 2D version too.
+  const hasFastWebGL = (() => {
+    try {
+      const gl = document.createElement('canvas').getContext('webgl2', { failIfMajorPerformanceCaveat: true });
+      if (!gl) return false;
+      const info = gl.getExtension('WEBGL_debug_renderer_info');
+      const renderer = String(info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
+      gl.getExtension('WEBGL_lose_context')?.loseContext();
+      return !/swiftshader|llvmpipe|softpipe|software|basic render|microsoft warp/i.test(renderer);
+    } catch { return false; }
+  })();
+
+  // A slow GPU can pass that check and still stutter. Once shaders have compiled, time a few dozen frames
+  // and hand over to 2D if the typical frame takes longer than 50 ms (under 20 fps).
+  function watchFrameRate(f: Flight) {
+    if (reducedMotion) return;
+    const gaps: number[] = [];
+    let start = 0, last = 0;
+    const tick = (t: number) => {
+      if (flight !== f) return;
+      if (!start) start = t;
+      if (t - start > 1500 && last) gaps.push(t - last);
+      last = t;
+      const done = gaps.length >= 30 || t - start > 5500;
+      if (!done) return void requestAnimationFrame(tick);
+      const median = gaps.sort((x, y) => x - y)[gaps.length >> 1] ?? Infinity;
+      if (document.visibilityState === 'visible' && median > 50) {
+        console.info(`3D mission runs at ${(1000 / median).toFixed(1)} fps here, flying it in 2D`);
+        f.stop?.();
+        boot2d();
+      }
+    };
+    requestAnimationFrame(tick);
+  }
 
   async function boot3d() {
-    if (!hasWebGL) throw new Error('WebGL 2 is not available');
+    if (!hasFastWebGL) throw new Error('No hardware-accelerated WebGL 2');
     const { createMission } = await import('../scripts/mission/scene.js');
-    run(createMission({ canvas, labels, events, names, reducedMotion }));
-    canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); boot2d(); });
+    const f = createMission({ canvas, labels, events, names, reducedMotion });
+    run(f, canvas);
+    watchFrameRate(f);
+    canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); if (flight === f) boot2d(); });
   }
 
-  // Without WebGL (Chrome with graphics acceleration off, for one), fly the same mission in 2D.
+  // Without fast WebGL, fly the same mission in 2D.
   async function boot2d() {
     const { createMission2D } = await import('../scripts/mission/mission2d.js');
-    const fresh = canvas.cloneNode() as HTMLCanvasElement; // a canvas keeps the first context type it was asked for
-    canvas.replaceWith(fresh);
+    const current = document.getElementById('mission-gl') as HTMLCanvasElement;
+    const fresh = current.cloneNode() as HTMLCanvasElement; // a canvas keeps the first context type it was asked for
+    fresh.classList.remove('on');
+    current.replaceWith(fresh);
     labels.hidden = true;
-    const f = createMission2D({ canvas: fresh, events, reducedMotion });
-    flight = f;
-    onScroll();
-    addEventListener('resize', () => { f.resize(); onScroll(); });
-    if (reducedMotion) f.draw(); else f.start();
-    requestAnimationFrame(() => fresh.classList.add('on'));
+    run(createMission2D({ canvas: fresh, events, reducedMotion }), fresh);
   }
 
   revealAfter(() =>
