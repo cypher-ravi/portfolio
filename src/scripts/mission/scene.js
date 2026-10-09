@@ -416,9 +416,10 @@ export function createMission({ canvas, labels, events: ev, names, reducedMotion
     composer.render();
   }
 
+  let stopped = false;
   function loop() { if (!running) return; render(); requestAnimationFrame(loop); }
   resize();
-  document.addEventListener('visibilitychange', () => { if (document.hidden) running = false; else if (!reducedMotion) { running = true; requestAnimationFrame(loop); } });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) running = false; else if (!reducedMotion && !stopped) { running = true; requestAnimationFrame(loop); } });
 
   return {
     /** progress through the flight, and whether the page has scrolled past it (dims the scene behind content) */
@@ -426,5 +427,11 @@ export function createMission({ canvas, labels, events: ev, names, reducedMotion
     resize() { resize(); if (reducedMotion) render(); },
     start() { running = true; requestAnimationFrame(loop); },
     draw: render,
+    /** stop for good and free the GPU, when the page hands the flight to the 2D version */
+    stop() {
+      stopped = true; running = false;
+      for (const el of Object.values(L)) el.remove();
+      composer.dispose(); renderer.dispose(); renderer.forceContextLoss();
+    },
   };
 }
