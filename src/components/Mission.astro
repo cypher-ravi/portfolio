@@ -104,34 +104,38 @@ const events = {
     requestAnimationFrame(() => el.classList.add('on'));
   }
 
-  // WebGL 2 on a real GPU. A software renderer (Chrome with graphics acceleration off or a blocklisted GPU)
-  // draws this scene at a frame or two a second, which reads as frozen, so it gets the 2D version too.
-  const hasFastWebGL = (() => {
+  // 'gpu': WebGL 2 on a real GPU. 'soft': WebGL 2 through a software renderer (Chrome with graphics
+  // acceleration off, or a blocklisted GPU), which gets a lighter 3D scene. 'none': no WebGL 2 at all.
+  const webgl = ((): 'gpu' | 'soft' | 'none' => {
     try {
-      const gl = document.createElement('canvas').getContext('webgl2', { failIfMajorPerformanceCaveat: true });
-      if (!gl) return false;
+      const gl = document.createElement('canvas').getContext('webgl2');
+      if (!gl) return 'none';
       const info = gl.getExtension('WEBGL_debug_renderer_info');
       const renderer = String(info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
       gl.getExtension('WEBGL_lose_context')?.loseContext();
-      return !/swiftshader|llvmpipe|softpipe|software|basic render|microsoft warp/i.test(renderer);
-    } catch { return false; }
+      const soft = /swiftshader|llvmpipe|softpipe|software|basic render|microsoft warp/i.test(renderer)
+        || !document.createElement('canvas').getContext('webgl2', { failIfMajorPerformanceCaveat: true });
+      return soft ? 'soft' : 'gpu';
+    } catch { return 'none'; }
   })();
 
-  // A slow GPU can pass that check and still stutter. Once shaders have compiled, time a few dozen frames
-  // and hand over to 2D if the typical frame takes longer than 50 ms (under 20 fps).
-  function watchFrameRate(f: Flight) {
+  // A slow GPU can pass those checks and still stutter. Once shaders have compiled, time a few dozen frames
+  // and hand over to 2D if the typical frame is too slow: under 20 fps on a GPU, under 8 fps in software,
+  // where the lighter scene still reads as motion.
+  function watchFrameRate(f: Flight, lite: boolean) {
     if (reducedMotion) return;
+    const warmup = lite ? 3000 : 1500, slowest = lite ? 125 : 50;
     const gaps: number[] = [];
     let start = 0, last = 0;
     const tick = (t: number) => {
       if (flight !== f) return;
       if (!start) start = t;
-      if (t - start > 1500 && last) gaps.push(t - last);
+      if (t - start > warmup && last) gaps.push(t - last);
       last = t;
-      const done = gaps.length >= 30 || t - start > 5500;
+      const done = gaps.length >= 30 || t - start > warmup + 4000;
       if (!done) return void requestAnimationFrame(tick);
       const median = gaps.sort((x, y) => x - y)[gaps.length >> 1] ?? Infinity;
-      if (document.visibilityState === 'visible' && median > 50) {
+      if (document.visibilityState === 'visible' && median > slowest) {
         console.info(`3D mission runs at ${(1000 / median).toFixed(1)} fps here, flying it in 2D`);
         f.stop?.();
         boot2d();
@@ -141,15 +145,16 @@ const events = {
   }
 
   async function boot3d() {
-    if (!hasFastWebGL) throw new Error('No hardware-accelerated WebGL 2');
+    if (webgl === 'none') throw new Error('WebGL 2 is not available');
     const { createMission } = await import('../scripts/mission/scene.js');
-    const f = createMission({ canvas, labels, events, names, reducedMotion });
+    const lite = webgl === 'soft';
+    const f = createMission({ canvas, labels, events, names, reducedMotion, lite });
     run(f, canvas);
-    watchFrameRate(f);
+    watchFrameRate(f, lite);
     canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); if (flight === f) boot2d(); });
   }
 
-  // Without fast WebGL, fly the same mission in 2D.
+  // Without WebGL, or when 3D is too slow, fly the same mission in 2D.
   async function boot2d() {
     const { createMission2D } = await import('../scripts/mission/mission2d.js');
     const current = document.getElementById('mission-gl') as HTMLCanvasElement;

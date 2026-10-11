@@ -12,13 +12,15 @@ const sstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a)
 const lerp = (a, b, t) => a + (b - a) * t;
 
 /**
- * @param {{ canvas: HTMLCanvasElement, labels: HTMLElement, events: Record<string, number>, names: any, reducedMotion: boolean }} o
+ * @param {{ canvas: HTMLCanvasElement, labels: HTMLElement, events: Record<string, number>, names: any, reducedMotion: boolean, lite?: boolean }} o
+ * lite: for software WebGL. Lower resolution, no shadows and no post-processing, so it still moves smoothly.
  */
-export function createMission({ canvas, labels, events: ev, names, reducedMotion }) {
+export function createMission({ canvas, labels, events: ev, names, reducedMotion, lite = false }) {
   const small = matchMedia('(max-width: 760px)').matches;
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, stencil: false, depth: true, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, small ? 1.5 : 1.75));
-  renderer.shadowMap.enabled = !small;
+  renderer.setPixelRatio(lite ? 0.5 : Math.min(devicePixelRatio, small ? 1.5 : 1.75));
+  renderer.shadowMap.enabled = !small && !lite;
+  if (lite) renderer.toneMapping = THREE.AgXToneMapping; // the composer does this otherwise
   renderer.shadowMap.type = THREE.PCFShadowMap;
 
   const scene = new THREE.Scene();
@@ -289,7 +291,7 @@ export function createMission({ canvas, labels, events: ev, names, reducedMotion
   const grain = new NoiseEffect({ blendFunction: BlendFunction.OVERLAY, premultiply: true });
   grain.blendMode.opacity.value = 0.18;
   composer.addPass(new EffectPass(camera, new ToneMappingEffect({ mode: ToneMappingMode.AGX }), new VignetteEffect({ offset: 0.3, darkness: 0.62 }), grain));
-  if (!small) composer.addPass(new EffectPass(camera, new SMAAEffect()));
+  if (!small && !lite) composer.addPass(new EffectPass(camera, new SMAAEffect()));
 
   /* ---------- state + frame ---------- */
   let target = 0, p = 0, dim = 0, dimTarget = 0, running = false, first = true, shiftX = 0, shiftY = 0;
@@ -413,7 +415,7 @@ export function createMission({ canvas, labels, events: ev, names, reducedMotion
     place(L.dest, planet.position.clone().add(new THREE.Vector3(16, 0, 0)), sstep(ev.wide + 0.03, ev.wide + 0.08, p) * show);
 
     canvas.style.opacity = String(1 - dim * 0.72);
-    composer.render();
+    if (lite) renderer.render(scene, camera); else composer.render();
   }
 
   let stopped = false;
