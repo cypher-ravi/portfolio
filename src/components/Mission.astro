@@ -1,8 +1,8 @@
 ---
-// Mission Ravi-1: one fixed canvas behind the page. The hero shows the rocket on the pad, and the
-// mission chapters ([data-mission-track]) fly it: each spent stage separates in vacuum, the payload
+// Mission Ravi-1: one fixed vector (SVG) view behind the page. The hero shows the rocket on the pad, and
+// the mission chapters ([data-mission-track]) fly it: each spent stage separates in vacuum, the payload
 // coasts on. Decoration only: every word stays in the HTML chapters.
-import { legs, partLabels } from '../data/mission';
+import { legs } from '../data/mission';
 
 const N = legs.length;
 const at = (id: string) => legs.findIndex((l) => l.id === id);
@@ -15,9 +15,8 @@ const events = {
   wide: at('trajectory') / N,
 };
 ---
-<div class="mission" id="mission" aria-hidden="true" data-events={JSON.stringify(events)} data-names={JSON.stringify(partLabels)}>
-  <canvas id="mission-gl"></canvas>
-  <div class="m-labels" id="mission-labels"></div>
+<div class="mission" id="mission" aria-hidden="true" data-events={JSON.stringify(events)}>
+  <div class="m-view" id="mission-view"></div>
   <dl class="m-hud" id="mission-hud">
     <div><dt>T+</dt><dd id="hud-t">00:00</dd></div>
     <div><dt>Altitude</dt><dd><span id="hud-a">0</span><small>km</small></dd></div>
@@ -27,17 +26,9 @@ const events = {
 
 <style>
   .mission { position: fixed; inset: 0; z-index: 0; pointer-events: none; background: #010204; }
-  #mission-gl { display: block; width: 100%; height: 100%; opacity: 0; transition: opacity 1.2s var(--ease); }
-  #mission-gl.on { opacity: 1; }
-  .m-labels { position: absolute; inset: 0; overflow: hidden; }
-  :global(.m-label) {
-    position: absolute; left: 0; top: 0; opacity: 0; white-space: nowrap;
-    font: 400 0.72rem/1 var(--mono); letter-spacing: 0.06em; color: var(--text);
-    padding: 6px 9px; border-radius: 6px; background: color-mix(in srgb, #05070a 62%, transparent); backdrop-filter: blur(6px);
-    transition: opacity 0.35s;
-  }
-  :global(.m-label)::before { content: ''; position: absolute; left: -14px; top: 50%; width: 12px; height: 1px; background: var(--flame); }
-  :global(.m-label b) { font-weight: 400; color: var(--flame); text-transform: uppercase; }
+  .m-view { position: absolute; inset: 0; opacity: 0; transition: opacity 1.2s var(--ease); }
+  .m-view.on { opacity: 1; }
+  :global(.mission-vector) { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
   .m-hud {
     position: absolute; right: 24px; bottom: 24px; margin: 0; display: grid; grid-template-columns: repeat(3, auto); gap: 22px;
     font-family: var(--mono); text-align: right; opacity: 0; transition: opacity 0.5s;
@@ -49,20 +40,17 @@ const events = {
   @media (max-width: 760px) {
     .m-hud { right: 12px; top: 64px; bottom: auto; gap: 12px; padding: 8px 12px; border-radius: 10px; background: color-mix(in srgb, #05070a 70%, transparent); backdrop-filter: blur(8px); }
     .m-hud dd { font-size: 0.85rem; }
-    .m-labels { display: none; } /* the chapter cards already name each part */
   }
 </style>
 
 <script>
   import { revealAfter } from '../scripts/motion';
 
-  type Flight = { setProgress(p: number, past: boolean): void; resize(): void; start(): void; draw(): void; stop?(): void };
+  type Flight = { setProgress(p: number, past: boolean): void; resize(): void; start(): void; draw(): void; el: SVGSVGElement };
   const root = document.getElementById('mission')!;
-  const canvas = document.getElementById('mission-gl') as HTMLCanvasElement;
-  const labels = document.getElementById('mission-labels')!;
+  const view = document.getElementById('mission-view')!;
   const hud = document.getElementById('mission-hud')!;
   const events = JSON.parse(root.dataset.events!);
-  const names = JSON.parse(root.dataset.names!);
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const track = document.querySelector<HTMLElement>('[data-mission-track]');
 
@@ -97,85 +85,24 @@ const events = {
 
   addEventListener('resize', () => { flight?.resize(); onScroll(); });
 
-  function run(f: Flight, el: HTMLCanvasElement) {
+  async function boot() {
+    const { createMissionVector } = await import('../scripts/mission/vector.js');
+    const f = createMissionVector({ events, reducedMotion }) as Flight;
+    view.append(f.el);
     flight = f;
     onScroll();
     if (reducedMotion) f.draw(); else f.start();
-    requestAnimationFrame(() => el.classList.add('on'));
-  }
-
-  // 'gpu': WebGL 2 on a real GPU. 'soft': WebGL 2 through a software renderer (Chrome with graphics
-  // acceleration off, or a blocklisted GPU), which gets a lighter 3D scene. 'none': no WebGL 2 at all.
-  const webgl = ((): 'gpu' | 'soft' | 'none' => {
-    try {
-      const gl = document.createElement('canvas').getContext('webgl2');
-      if (!gl) return 'none';
-      const info = gl.getExtension('WEBGL_debug_renderer_info');
-      const renderer = String(info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
-      gl.getExtension('WEBGL_lose_context')?.loseContext();
-      const soft = /swiftshader|llvmpipe|softpipe|software|basic render|microsoft warp/i.test(renderer)
-        || !document.createElement('canvas').getContext('webgl2', { failIfMajorPerformanceCaveat: true });
-      return soft ? 'soft' : 'gpu';
-    } catch { return 'none'; }
-  })();
-
-  // A slow GPU can pass those checks and still stutter. Once shaders have compiled, time a few dozen frames
-  // and hand over to 2D if the typical frame is too slow: under 20 fps on a GPU, under 8 fps in software,
-  // where the lighter scene still reads as motion.
-  function watchFrameRate(f: Flight, lite: boolean) {
-    if (reducedMotion) return;
-    const warmup = lite ? 3000 : 1500, slowest = lite ? 125 : 50;
-    const gaps: number[] = [];
-    let start = 0, last = 0;
-    const tick = (t: number) => {
-      if (flight !== f) return;
-      if (!start) start = t;
-      if (t - start > warmup && last) gaps.push(t - last);
-      last = t;
-      const done = gaps.length >= 30 || t - start > warmup + 4000;
-      if (!done) return void requestAnimationFrame(tick);
-      const median = gaps.sort((x, y) => x - y)[gaps.length >> 1] ?? Infinity;
-      if (document.visibilityState === 'visible' && median > slowest) {
-        console.info(`3D mission runs at ${(1000 / median).toFixed(1)} fps here, flying it in 2D`);
-        f.stop?.();
-        boot2d();
-      }
-    };
-    requestAnimationFrame(tick);
-  }
-
-  async function boot3d() {
-    if (webgl === 'none') throw new Error('WebGL 2 is not available');
-    const { createMission } = await import('../scripts/mission/scene.js');
-    const lite = webgl === 'soft';
-    const f = createMission({ canvas, labels, events, names, reducedMotion, lite });
-    run(f, canvas);
-    watchFrameRate(f, lite);
-    canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); if (flight === f) boot2d(); });
-  }
-
-  // Without WebGL, or when 3D is too slow, fly the same mission in 2D.
-  async function boot2d() {
-    const { createMission2D } = await import('../scripts/mission/mission2d.js');
-    const current = document.getElementById('mission-gl') as HTMLCanvasElement;
-    const fresh = current.cloneNode() as HTMLCanvasElement; // a canvas keeps the first context type it was asked for
-    fresh.classList.remove('on');
-    current.replaceWith(fresh);
-    labels.hidden = true;
-    run(createMission2D({ canvas: fresh, events, reducedMotion }), fresh);
+    requestAnimationFrame(() => view.classList.add('on'));
   }
 
   revealAfter(() =>
-    boot3d()
-      .catch((err) => {
-        console.info('3D mission unavailable, flying it in 2D', err);
-        // A page kept open across a deploy asks for script files that no longer exist. Reload once for the new ones.
-        const stale = /dynamically imported module|Importing a module script failed/i.test(String(err?.message));
-        try {
-          if (stale && !sessionStorage.getItem('mission-reloaded')) { sessionStorage.setItem('mission-reloaded', '1'); location.reload(); return; }
-        } catch {}
-        return boot2d();
-      })
-      .catch((err) => console.warn('Mission view unavailable', err)),
+    boot().catch((err) => {
+      // A page kept open across a deploy asks for script files that no longer exist. Reload once for the new ones.
+      const stale = /dynamically imported module|Importing a module script failed/i.test(String(err?.message));
+      try {
+        if (stale && !sessionStorage.getItem('mission-reloaded')) { sessionStorage.setItem('mission-reloaded', '1'); location.reload(); return; }
+      } catch {}
+      console.warn('Mission view unavailable', err);
+    }),
   );
 </script>
