@@ -30,6 +30,7 @@ const events = {
   #mission-gl { display: block; width: 100%; height: 100%; opacity: 0; transition: opacity 1.2s var(--ease); }
   #mission-gl.on { opacity: 1; }
   .m-labels { position: absolute; inset: 0; overflow: hidden; }
+  :global(.mission-vector) { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
   :global(.m-label) {
     position: absolute; left: 0; top: 0; opacity: 0; white-space: nowrap;
     font: 400 0.72rem/1 var(--mono); letter-spacing: 0.06em; color: var(--text);
@@ -104,8 +105,8 @@ const events = {
     requestAnimationFrame(() => el.classList.add('on'));
   }
 
-  // 'gpu': WebGL 2 on a real GPU. 'soft': WebGL 2 through a software renderer (Chrome with graphics
-  // acceleration off, or a blocklisted GPU), which gets a lighter 3D scene. 'none': no WebGL 2 at all.
+  // 'gpu': WebGL 2 on a real GPU, which gets the 3D scene. 'soft': WebGL 2 through a software renderer
+  // (Chrome with graphics acceleration off, or a blocklisted GPU). 'none': no WebGL 2 at all.
   const webgl = ((): 'gpu' | 'soft' | 'none' => {
     try {
       const gl = document.createElement('canvas').getContext('webgl2');
@@ -119,12 +120,11 @@ const events = {
     } catch { return 'none'; }
   })();
 
-  // A slow GPU can pass those checks and still stutter. Once shaders have compiled, time a few dozen frames
-  // and hand over to 2D if the typical frame is too slow: under 20 fps on a GPU, under 8 fps in software,
-  // where the lighter scene still reads as motion.
-  function watchFrameRate(f: Flight, lite: boolean) {
+  // A slow GPU can pass that check and still stutter. Once shaders have compiled, time a few dozen frames
+  // and hand over to the vector flight if the typical frame takes longer than 50 ms (under 20 fps).
+  function watchFrameRate(f: Flight) {
     if (reducedMotion) return;
-    const warmup = lite ? 3000 : 1500, slowest = lite ? 125 : 50;
+    const warmup = 1500, slowest = 50;
     const gaps: number[] = [];
     let start = 0, last = 0;
     const tick = (t: number) => {
@@ -136,45 +136,43 @@ const events = {
       if (!done) return void requestAnimationFrame(tick);
       const median = gaps.sort((x, y) => x - y)[gaps.length >> 1] ?? Infinity;
       if (document.visibilityState === 'visible' && median > slowest) {
-        console.info(`3D mission runs at ${(1000 / median).toFixed(1)} fps here, flying it in 2D`);
+        console.info(`3D mission runs at ${(1000 / median).toFixed(1)} fps here, flying the vector version`);
         f.stop?.();
-        boot2d();
+        bootVector();
       }
     };
     requestAnimationFrame(tick);
   }
 
   async function boot3d() {
-    if (webgl === 'none') throw new Error('WebGL 2 is not available');
+    if (webgl !== 'gpu') throw new Error(webgl === 'soft' ? 'WebGL 2 runs in software here' : 'WebGL 2 is not available');
     const { createMission } = await import('../scripts/mission/scene.js');
-    const lite = webgl === 'soft';
-    const f = createMission({ canvas, labels, events, names, reducedMotion, lite });
+    const f = createMission({ canvas, labels, events, names, reducedMotion });
     run(f, canvas);
-    watchFrameRate(f, lite);
-    canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); if (flight === f) boot2d(); });
+    watchFrameRate(f);
+    canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); if (flight === f) bootVector(); });
   }
 
-  // Without WebGL, or when 3D is too slow, fly the same mission in 2D.
-  async function boot2d() {
-    const { createMission2D } = await import('../scripts/mission/mission2d.js');
-    const current = document.getElementById('mission-gl') as HTMLCanvasElement;
-    const fresh = current.cloneNode() as HTMLCanvasElement; // a canvas keeps the first context type it was asked for
-    fresh.classList.remove('on');
-    current.replaceWith(fresh);
+  // Without a real GPU, or when 3D is too slow, fly the same mission as vector shapes (SVG).
+  async function bootVector() {
+    const { createMissionVector } = await import('../scripts/mission/vector.js');
+    canvas.style.display = 'none';
     labels.hidden = true;
-    run(createMission2D({ canvas: fresh, events, reducedMotion }), fresh);
+    const f = createMissionVector({ events, reducedMotion });
+    root.insertBefore(f.el, labels); // under the HUD
+    run(f, f.el as unknown as HTMLCanvasElement);
   }
 
   revealAfter(() =>
     boot3d()
       .catch((err) => {
-        console.info('3D mission unavailable, flying it in 2D', err);
+        console.info('3D mission unavailable, flying the vector version', err);
         // A page kept open across a deploy asks for script files that no longer exist. Reload once for the new ones.
         const stale = /dynamically imported module|Importing a module script failed/i.test(String(err?.message));
         try {
           if (stale && !sessionStorage.getItem('mission-reloaded')) { sessionStorage.setItem('mission-reloaded', '1'); location.reload(); return; }
         } catch {}
-        return boot2d();
+        return bootVector();
       })
       .catch((err) => console.warn('Mission view unavailable', err)),
   );
