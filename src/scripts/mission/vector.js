@@ -1,6 +1,5 @@
-// The flight drawn as vector shapes (SVG), for browsers without a real GPU. Same look as the
-// Claude Design flight board: shaded paint, carbon interstage, plumes, fairing, gold-foil payload.
-// Same interface as the 3D scene: setProgress, resize, start, draw, stop.
+// The flight drawn as vector shapes (SVG), so it looks the same in every browser with or without a GPU.
+// Shaded paint, carbon interstage, plumes, fairing, gold-foil payload.
 const ss = (a, b, x) => { const k = Math.min(1, Math.max(0, (x - a) / (b - a))); return k * k * (3 - 2 * k); };
 const L = (a, b, k) => a + (b - a) * k;
 const f = (n) => n.toFixed(2);
@@ -109,7 +108,7 @@ export function createMissionVector({ events: ev, reducedMotion }) {
     return 1;
   };
 
-  let target = 0, p = 0, dim = 0, dimTarget = 0, running = false, stopped = false, last = 0, clock = 0, narrow = false;
+  let target = 0, p = 0, dim = 0, dimTarget = 0, running = false, last = 0, clock = 0, narrow = false;
 
   function resize() {
     const W = innerWidth, H = innerHeight;
@@ -208,7 +207,7 @@ export function createMissionVector({ events: ev, reducedMotion }) {
   resize();
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) running = false;
-    else if (!reducedMotion && !stopped && !running) { running = true; last = 0; requestAnimationFrame(loop); }
+    else if (!reducedMotion && !running) { running = true; last = 0; requestAnimationFrame(loop); }
   });
 
   return {
@@ -216,7 +215,6 @@ export function createMissionVector({ events: ev, reducedMotion }) {
     resize() { resize(); draw(); },
     start() { running = true; requestAnimationFrame(loop); },
     draw,
-    stop() { stopped = true; running = false; svg.remove(); },
     el: svg,
   };
 }

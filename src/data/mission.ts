@@ -28,13 +28,3 @@ export const legs: Leg[] = [
   { id: 'arrays', phase: 'Solar arrays deployed', title: 'Projects unfold and power the ship.', points: shipped.map((p) => `${p.name}: ${p.tldr}`), kept: shipped.map((p) => p.name) },
   { id: 'trajectory', phase: 'Transfer orbit', title: 'Next destination: a senior role.', points: ['Coasting toward a team that values AI and engineers who explain their systems.'] },
 ];
-
-// Labels pinned to the 3D parts, in the same words as the chapters.
-export const partLabels = {
-  stage1: `Stage 1 · ${freelance.period.replace(' – ', '–')} freelance`,
-  fairing: 'Fairing · B.Tech CS',
-  stage2: `Stage 2 · ${maximize.company} + teaching`,
-  payload: `Payload · ${instahyre.company}`,
-  arrays: shipped.map((p) => p.name),
-  destination: 'Next · Senior role',
-};
